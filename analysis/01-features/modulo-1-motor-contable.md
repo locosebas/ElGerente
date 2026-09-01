@@ -41,6 +41,13 @@ Si el motor contable no es correcto, no importa qué tan buena sea la interfaz. 
 - Qué es una API — cómo algo (por ahora el propio usuario probando, después WhatsApp) le habla al motor contable
 - Qué significa "determinístico" aquí: código normal con reglas explícitas, sin IA, 100% auditable línea por línea
 
+## Estado
+
+- Modelo de datos definido: `analysis/04-data-model/modulo-1-modelo-datos.md`
+- Stack elegido: `analysis/02-architecture/tech-stack.md`
+- Diseño de API y reglas de negocio: `analysis/02-architecture/modulo-1-api-design.md`
+- Implementado y probado de extremo a extremo (`backend/api_smoke_test.py`): terceros, facturas (emitidas/recibidas) con generación automática de asiento, pago/cobro de facturas, contratos, plan de cuentas, listado de asientos, balance por cuenta
+
 ## Próximo paso
 
-Modelo de datos definido (`analysis/04-data-model/modulo-1-modelo-datos.md`). Sigue: elegir lenguaje, framework y base de datos para implementarlo.
+Este entregable ya cumple el alcance definido arriba. Sigue decidir con qué se prueba en la práctica (¿el propio dueño registrando datos reales durante unos días?) antes de pasar al Módulo 2 (interfaz de WhatsApp).
