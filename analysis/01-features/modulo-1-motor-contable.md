@@ -34,7 +34,7 @@ Si el motor contable no es correcto, no importa qué tan buena sea la interfaz. 
 - Qué es un "movimiento": entrada (ingreso) vs. salida (gasto)
 - Diferencia entre factura, contrato y el movimiento de dinero real — no son lo mismo: un contrato puede generar varias facturas; una factura puede pagarse en varias partes o de una vez
 - Qué es una cuenta / categoría de gasto, y por qué importa para que los reportes futuros tengan sentido
-- Partida simple vs. partida doble — para este MVP se evalúa empezar con partida simple (más fácil de entender y auditar) frente a partida doble (estándar contable formal), explicando el trade-off antes de decidir
+- Partida simple vs. partida doble — **decidido**: partida doble real desde el inicio (el dueño ya la maneja). Detalle del modelo en `analysis/04-data-model/modulo-1-modelo-datos.md`.
 
 ### B) Técnico (lo necesario para construir esto)
 - Qué es un modelo de datos / base de datos relacional, con ejemplos concretos de este proyecto (tablas: factura, contrato, movimiento)
@@ -43,4 +43,4 @@ Si el motor contable no es correcto, no importa qué tan buena sea la interfaz. 
 
 ## Próximo paso
 
-Antes de diseñar el modelo de datos, calibrar el nivel de la lección de contabilidad según lo que el dueño ya sabe, para no repetir lo obvio ni asumir de más.
+Modelo de datos definido (`analysis/04-data-model/modulo-1-modelo-datos.md`). Sigue: elegir lenguaje, framework y base de datos para implementarlo.
