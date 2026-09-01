@@ -29,6 +29,11 @@ class OrigenAsiento(str, enum.Enum):
     MANUAL = "manual"
 
 
+class LibroContable(str, enum.Enum):
+    OFICIAL = "oficial"
+    INTERNA = "interna"
+
+
 class TipoTercero(str, enum.Enum):
     CLIENTE = "cliente"
     PROVEEDOR = "proveedor"
@@ -77,6 +82,8 @@ class Asiento(Base):
     fecha: Mapped[date] = mapped_column(Date)
     descripcion: Mapped[str] = mapped_column(Text)
     origen: Mapped[OrigenAsiento] = mapped_column(Enum(OrigenAsiento))
+    libro: Mapped[LibroContable] = mapped_column(Enum(LibroContable), default=LibroContable.OFICIAL)
+    documento_soporte: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     lineas: Mapped[list["LineaAsiento"]] = relationship(

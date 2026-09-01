@@ -14,6 +14,8 @@ PLAN_DE_CUENTAS_INICIAL = [
     ("3115", "Capital", TipoCuenta.PATRIMONIO),
     ("4135", "Ingresos por ventas", TipoCuenta.INGRESO),
     ("5195", "Gastos diversos", TipoCuenta.GASTO),
+    ("2905", "Cuentas con el dueño", TipoCuenta.PASIVO),
+    ("5905", "Gastos internos sin soporte", TipoCuenta.GASTO),
 ]
 
 

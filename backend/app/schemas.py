@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict
 from app.models import (
     EstadoContrato,
     EstadoFactura,
+    LibroContable,
     OrigenAsiento,
     TipoCuenta,
     TipoFactura,
@@ -45,8 +46,24 @@ class AsientoOut(BaseModel):
     fecha: date
     descripcion: str
     origen: OrigenAsiento
+    libro: LibroContable
+    documento_soporte: str | None
     created_at: datetime
     lineas: list[LineaAsientoOut]
+
+
+class LineaMovimientoIn(BaseModel):
+    cuenta_codigo: str
+    debito: Decimal = Decimal("0")
+    credito: Decimal = Decimal("0")
+
+
+class MovimientoManualCreate(BaseModel):
+    fecha: date
+    descripcion: str
+    libro: LibroContable
+    documento_soporte: str | None = None
+    lineas: list[LineaMovimientoIn]
 
 
 class FacturaCreate(BaseModel):

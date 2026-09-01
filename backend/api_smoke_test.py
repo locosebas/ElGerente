@@ -136,7 +136,87 @@ r = client.post(
 )
 esperar(r.status_code == 200, "registrar contrato -> 200")
 
-# --- Asientos: verificar que todos cuadran ---
+# --- Movimiento manual oficial SIN documento_soporte -> rechazado ---
+r = client.post(
+    "/movimientos",
+    json={
+        "fecha": "2026-09-11",
+        "descripcion": "Ajuste oficial sin soporte (debe fallar)",
+        "libro": "oficial",
+        "documento_soporte": None,
+        "lineas": [
+            {"cuenta_codigo": "5195", "debito": "10000", "credito": "0"},
+            {"cuenta_codigo": "1105", "debito": "0", "credito": "10000"},
+        ],
+    },
+)
+esperar(r.status_code == 422, "movimiento oficial sin documento_soporte -> 422")
+
+# --- Movimiento manual oficial CON documento_soporte -> aceptado ---
+r = client.post(
+    "/movimientos",
+    json={
+        "fecha": "2026-09-11",
+        "descripcion": "Ajuste oficial de caja menor",
+        "libro": "oficial",
+        "documento_soporte": "Recibo caja menor #045",
+        "lineas": [
+            {"cuenta_codigo": "5195", "debito": "10000", "credito": "0"},
+            {"cuenta_codigo": "1105", "debito": "0", "credito": "10000"},
+        ],
+    },
+)
+esperar(r.status_code == 200, "movimiento oficial con documento_soporte -> 200")
+
+# --- Movimiento manual INTERNO (para-contabilidad) sin soporte -> aceptado ---
+r = client.post(
+    "/movimientos",
+    json={
+        "fecha": "2026-09-12",
+        "descripcion": "El dueño retira efectivo para gasto personal",
+        "libro": "interna",
+        "documento_soporte": None,
+        "lineas": [
+            {"cuenta_codigo": "2905", "debito": "50000", "credito": "0"},
+            {"cuenta_codigo": "1105", "debito": "0", "credito": "50000"},
+        ],
+    },
+)
+esperar(r.status_code == 200, "movimiento interno sin soporte -> 200")
+
+# --- El balance oficial NO debe verse afectado por el movimiento interno ---
+r = client.get("/balance")
+balance_oficial = {c["cuenta_codigo"]: c["saldo"] for c in r.json()}
+esperar(
+    balance_oficial["1105"] == "-10000.00",
+    f"Caja oficial solo refleja el ajuste oficial (-10.000), no el retiro interno: {balance_oficial['1105']}",
+)
+from decimal import Decimal  # noqa: E402
+
+esperar(
+    "2905" not in balance_oficial or Decimal(balance_oficial["2905"]) == 0,
+    "Cuentas con el dueño no se mueve en el balance oficial",
+)
+
+# --- El balance CON incluir_interna=true sí debe reflejar ambos ---
+r = client.get("/balance", params={"incluir_interna": "true"})
+balance_total = {c["cuenta_codigo"]: c["saldo"] for c in r.json()}
+esperar(
+    balance_total["1105"] == "-60000.00",
+    f"Caja total = oficial (-10.000) + interno (-50.000) = -60.000: {balance_total['1105']}",
+)
+esperar(
+    balance_total["2905"] == "-50000.00",
+    "Cuentas con el dueño queda en -50.000: el dueño le debe eso a la "
+    f"empresa (saldo negativo en un pasivo = lo contrario de deberle a él): {balance_total['2905']}",
+)
+
+# --- Filtro de /asientos por libro ---
+r = client.get("/asientos", params={"libro": "interna"})
+asientos_internos = r.json()
+esperar(len(asientos_internos) == 1, "filtro /asientos?libro=interna trae solo el asiento interno")
+
+# --- Asientos: verificar que TODOS (incluidos los manuales) cuadran ---
 r = client.get("/asientos")
 asientos = r.json()
 for a in asientos:
@@ -144,7 +224,7 @@ for a in asientos:
     total_credito = sum(float(l["credito"]) for l in a["lineas"])
     esperar(
         abs(total_debito - total_credito) < 0.001,
-        f"asiento {a['id']} ({a['descripcion']}) cuadra: debito={total_debito} credito={total_credito}",
+        f"asiento {a['id']} [{a['libro']}] ({a['descripcion']}) cuadra: debito={total_debito} credito={total_credito}",
     )
 
 print(f"\nTotal de asientos generados: {len(asientos)}")

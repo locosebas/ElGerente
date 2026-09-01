@@ -32,7 +32,18 @@ Factura y contrato son entidades aparte que, cuando corresponde, generan un asie
 | fecha | fecha | |
 | descripcion | texto | |
 | origen | enum + FK nullable | factura_id / contrato_id / manual |
+| **libro** | enum | **oficial / interna** — ver "Libro oficial vs. libro interno" abajo |
+| **documento_soporte** | texto, nullable | Referencia al documento que respalda el asiento (número de factura, ruta de archivo, o una nota). **Obligatorio si `libro = oficial`**, no aplica si `libro = interna` |
 | created_at | timestamp | |
+
+## Libro oficial vs. libro interno (para-contabilidad)
+
+Retoma un concepto que ya había aparecido en la v1 archivada (`analysis/_archive/2026-04-10-v1-plataforma-multitenant/vision.md`, sección "para-contabilidad"): además de la contabilidad formal, hay movimientos internos/no oficiales que también hay que rastrear, pero que **no deben aparecer** cuando se calcula la contabilidad real del negocio.
+
+- **`libro = oficial`** — todo lo que genera factura o contrato entra aquí automáticamente. También se puede registrar manualmente, pero siempre exige `documento_soporte`. Es lo que cuenta para el balance real / DIAN.
+- **`libro = interna`** — movimientos que se quieren rastrear pero no tienen ni necesitan documento de respaldo (ej.: el dueño saca efectivo de la caja para algo personal, un préstamo informal). Se registran igual con partida doble (mismas cuentas, mismas reglas de cuadre) para que también sean auditables entre sí, pero quedan fuera del balance oficial por defecto.
+
+Ambos libros comparten el mismo plan de cuentas (`cuenta`) — lo que cambia es la etiqueta `libro` del asiento, no la tabla de cuentas. Esto permite ver, si se quiere, cuánto difiere la caja "oficial" de la caja "real" (oficial + interna).
 
 ### `linea_asiento`
 | Campo | Tipo | Nota |
@@ -83,7 +94,18 @@ Registrar una factura recibida genera automáticamente su `asiento` con dos `lin
 
 El usuario no captura manualmente débito/crédito para el caso normal — el sistema lo deriva del tipo de factura. La partida doble queda "por debajo del capó": auditable, pero no obliga a pensar en débito/crédito cada vez que se registra algo simple.
 
+## Plan de cuentas — adición para libro interno
+
+Dos cuentas nuevas, pensadas principalmente para `libro = interna` (aunque nada impide usarlas también en el oficial si aplica):
+
+| Código | Nombre | Tipo |
+|---|---|---|
+| 2905 | Cuentas con el dueño | Pasivo |
+| 5905 | Gastos internos sin soporte | Gasto |
+
+`2905 Cuentas con el dueño` puede quedar en saldo negativo (el dueño le debe a la empresa) o positivo (la empresa le debe al dueño) — es normal en una cuenta puente de este tipo.
+
 ## Pendiente
 
-- Definir el plan de cuentas inicial completo (subconjunto mínimo de cuentas para arrancar)
 - Elegir lenguaje, framework y base de datos para implementar esto (ver `analysis/02-architecture/tech-stack.md`, en revisión)
+- `documento_soporte` es por ahora solo texto/referencia (número de factura o nota) — cuando exista carga real de archivos (Módulo 3), se conecta a un archivo de verdad

@@ -20,6 +20,7 @@ Si el motor contable no es correcto, no importa qué tan buena sea la interfaz. 
 - Consultar el balance / listado de movimientos
 - Persistencia real en base de datos (no en memoria)
 - Una "consignación" se modela como un tipo de entrada (movimiento de dinero que entra a una cuenta) — no es una entidad aparte en este módulo
+- **Movimientos manuales**, en dos libros separados: **oficial** (exige documento de soporte, cuenta para la contabilidad real) e **interno / no oficial** (para-contabilidad — sin soporte, se rastrea aparte y no aparece en el balance oficial por defecto)
 
 **No incluye todavía (queda para módulos siguientes):**
 - WhatsApp ni ninguna interfaz de chat (Módulo 2)
@@ -46,7 +47,7 @@ Si el motor contable no es correcto, no importa qué tan buena sea la interfaz. 
 - Modelo de datos definido: `analysis/04-data-model/modulo-1-modelo-datos.md`
 - Stack elegido: `analysis/02-architecture/tech-stack.md`
 - Diseño de API y reglas de negocio: `analysis/02-architecture/modulo-1-api-design.md`
-- Implementado y probado de extremo a extremo (`backend/api_smoke_test.py`): terceros, facturas (emitidas/recibidas) con generación automática de asiento, pago/cobro de facturas, contratos, plan de cuentas, listado de asientos, balance por cuenta
+- Implementado y probado de extremo a extremo (`backend/api_smoke_test.py`): terceros, facturas (emitidas/recibidas) con generación automática de asiento, pago/cobro de facturas, contratos, movimientos manuales (libro oficial con soporte / libro interno sin soporte), plan de cuentas, listado de asientos con filtro por libro, balance por cuenta con opción de incluir lo interno
 
 ## Próximo paso
 

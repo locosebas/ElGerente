@@ -20,6 +20,7 @@ from app.models import (
     Cuenta,
     EstadoFactura,
     Factura,
+    LibroContable,
     LineaAsiento,
     OrigenAsiento,
     Tercero,
@@ -54,6 +55,18 @@ class MedioPagoInvalidoError(Exception):
     pass
 
 
+class DocumentoSoporteRequeridoError(Exception):
+    """libro=oficial siempre exige documento_soporte (ver modulo-1-api-design.md, sección 3)."""
+
+
+class CuentaNoExisteError(Exception):
+    pass
+
+
+class LineasInvalidasError(Exception):
+    """Menos de 2 líneas, o alguna línea sin monto en débito ni crédito."""
+
+
 class AsientoDesbalanceadoError(Exception):
     """No debería ocurrir nunca si las reglas de este archivo son correctas.
 
@@ -73,8 +86,22 @@ def _crear_asiento(
     descripcion: str,
     origen: OrigenAsiento,
     lineas: list[LineaAsiento],
+    *,
+    libro: LibroContable = LibroContable.OFICIAL,
+    documento_soporte: str | None = None,
 ) -> Asiento:
-    asiento = Asiento(fecha=fecha, descripcion=descripcion, origen=origen, lineas=lineas)
+    if libro == LibroContable.OFICIAL and not documento_soporte:
+        raise DocumentoSoporteRequeridoError(
+            "Un asiento de libro oficial siempre requiere documento_soporte"
+        )
+    asiento = Asiento(
+        fecha=fecha,
+        descripcion=descripcion,
+        origen=origen,
+        libro=libro,
+        documento_soporte=documento_soporte,
+        lineas=lineas,
+    )
     if not asiento.cuadra():
         total_debito = sum((l.debito for l in lineas), Decimal("0"))
         total_credito = sum((l.credito for l in lineas), Decimal("0"))
@@ -123,7 +150,15 @@ def registrar_factura(
         ]
         descripcion = f"Factura emitida {numero}"
 
-    asiento = _crear_asiento(session, fecha, descripcion, OrigenAsiento.FACTURA, lineas)
+    asiento = _crear_asiento(
+        session,
+        fecha,
+        descripcion,
+        OrigenAsiento.FACTURA,
+        lineas,
+        libro=LibroContable.OFICIAL,
+        documento_soporte=descripcion,
+    )
 
     factura = Factura(
         tipo=tipo,
@@ -176,12 +211,61 @@ def pagar_factura(
         ]
         descripcion = f"Cobro factura emitida {factura.numero}"
 
-    _crear_asiento(session, fecha, descripcion, OrigenAsiento.FACTURA, lineas)
+    _crear_asiento(
+        session,
+        fecha,
+        descripcion,
+        OrigenAsiento.FACTURA,
+        lineas,
+        libro=LibroContable.OFICIAL,
+        documento_soporte=descripcion,
+    )
 
     factura.estado = EstadoFactura.PAGADA
     session.commit()
     session.refresh(factura)
     return factura
+
+
+def registrar_movimiento_manual(
+    session: Session,
+    *,
+    fecha: date,
+    descripcion: str,
+    libro: LibroContable,
+    documento_soporte: str | None,
+    lineas: list[dict],
+) -> Asiento:
+    if len(lineas) < 2:
+        raise LineasInvalidasError("Un asiento manual requiere al menos 2 líneas")
+
+    lineas_orm: list[LineaAsiento] = []
+    for linea in lineas:
+        debito = linea["debito"]
+        credito = linea["credito"]
+        if debito == Decimal("0") and credito == Decimal("0"):
+            raise LineasInvalidasError(
+                "Cada línea debe tener débito o crédito distinto de cero"
+            )
+        cuenta = session.execute(
+            select(Cuenta).where(Cuenta.codigo == linea["cuenta_codigo"])
+        ).scalar_one_or_none()
+        if cuenta is None:
+            raise CuentaNoExisteError(f"Cuenta '{linea['cuenta_codigo']}' no existe")
+        lineas_orm.append(LineaAsiento(cuenta=cuenta, debito=debito, credito=credito))
+
+    asiento = _crear_asiento(
+        session,
+        fecha,
+        descripcion,
+        OrigenAsiento.MANUAL,
+        lineas_orm,
+        libro=libro,
+        documento_soporte=documento_soporte,
+    )
+    session.commit()
+    session.refresh(asiento)
+    return asiento
 
 
 def registrar_contrato(
@@ -210,12 +294,15 @@ def registrar_contrato(
     return contrato
 
 
-def calcular_balance(session: Session) -> list[dict]:
+def calcular_balance(session: Session, *, incluir_interna: bool = False) -> list[dict]:
     cuentas = session.execute(select(Cuenta).order_by(Cuenta.codigo)).scalars().all()
     resultado = []
     for cuenta in cuentas:
-        total_debito = sum((l.debito for l in cuenta.lineas), Decimal("0"))
-        total_credito = sum((l.credito for l in cuenta.lineas), Decimal("0"))
+        lineas = cuenta.lineas
+        if not incluir_interna:
+            lineas = [l for l in lineas if l.asiento.libro == LibroContable.OFICIAL]
+        total_debito = sum((l.debito for l in lineas), Decimal("0"))
+        total_credito = sum((l.credito for l in lineas), Decimal("0"))
         if cuenta.tipo in (TipoCuenta.ACTIVO, TipoCuenta.GASTO):
             saldo = total_debito - total_credito
         else:

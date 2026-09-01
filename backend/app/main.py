@@ -21,6 +21,7 @@ from app.schemas import (
     CuentaOut,
     FacturaCreate,
     FacturaOut,
+    MovimientoManualCreate,
     PagarFacturaRequest,
     SaldoCuenta,
     TerceroCreate,
@@ -36,6 +37,30 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def _serializar_asiento(a: Asiento) -> dict:
+    """AsientoOut necesita cuenta_codigo/cuenta_nombre por línea, que no son
+    atributos directos de LineaAsiento (viven en la cuenta relacionada) — por
+    eso no se puede devolver el objeto ORM tal cual con response_model."""
+    return {
+        "id": a.id,
+        "fecha": a.fecha,
+        "descripcion": a.descripcion,
+        "origen": a.origen,
+        "libro": a.libro,
+        "documento_soporte": a.documento_soporte,
+        "created_at": a.created_at,
+        "lineas": [
+            {
+                "cuenta_codigo": l.cuenta.codigo,
+                "cuenta_nombre": l.cuenta.nombre,
+                "debito": l.debito,
+                "credito": l.credito,
+            }
+            for l in a.lineas
+        ],
+    }
 
 
 @app.post("/terceros", response_model=TerceroOut)
@@ -119,29 +144,40 @@ def listar_cuentas(db: Session = Depends(get_db)) -> list[Cuenta]:
 
 
 @app.get("/balance", response_model=list[SaldoCuenta])
-def obtener_balance(db: Session = Depends(get_db)) -> list[dict]:
-    return services.calcular_balance(db)
+def obtener_balance(
+    incluir_interna: bool = False, db: Session = Depends(get_db)
+) -> list[dict]:
+    return services.calcular_balance(db, incluir_interna=incluir_interna)
+
+
+@app.post("/movimientos", response_model=AsientoOut)
+def crear_movimiento_manual(
+    data: MovimientoManualCreate, db: Session = Depends(get_db)
+) -> dict:
+    try:
+        asiento = services.registrar_movimiento_manual(
+            db,
+            fecha=data.fecha,
+            descripcion=data.descripcion,
+            libro=data.libro,
+            documento_soporte=data.documento_soporte,
+            lineas=[l.model_dump() for l in data.lineas],
+        )
+        return _serializar_asiento(asiento)
+    except services.DocumentoSoporteRequeridoError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    except services.LineasInvalidasError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    except services.CuentaNoExisteError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except services.AsientoDesbalanceadoError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
 
 
 @app.get("/asientos", response_model=list[AsientoOut])
-def listar_asientos(db: Session = Depends(get_db)) -> list[dict]:
-    asientos = db.execute(select(Asiento).order_by(Asiento.id)).scalars().all()
-    return [
-        {
-            "id": a.id,
-            "fecha": a.fecha,
-            "descripcion": a.descripcion,
-            "origen": a.origen,
-            "created_at": a.created_at,
-            "lineas": [
-                {
-                    "cuenta_codigo": l.cuenta.codigo,
-                    "cuenta_nombre": l.cuenta.nombre,
-                    "debito": l.debito,
-                    "credito": l.credito,
-                }
-                for l in a.lineas
-            ],
-        }
-        for a in asientos
-    ]
+def listar_asientos(libro: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
+    stmt = select(Asiento).order_by(Asiento.id)
+    if libro is not None:
+        stmt = stmt.where(Asiento.libro == libro)
+    asientos = db.execute(stmt).scalars().all()
+    return [_serializar_asiento(a) for a in asientos]
