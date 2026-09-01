@@ -1,9 +1,19 @@
 # Stack Tecnológico — El Gerente
 
 **Fecha**: 2026-04-10  
-**Estado**: ⚠️ En revisión — el alcance cambió el 2026-09-01 (ver `analysis/00-vision/vision.md`). Este stack se diseñó para una plataforma multi-tenant web+mobile hosteada en Fury; el MVP ahora es un chatbot de WhatsApp para una sola empresa. Se mantiene como referencia mientras se decide el stack v2.
+**Estado**: La sección v1 completa (multi-tenant + Fury) queda como referencia histórica. Ver más abajo el **stack v2**, decidido el 2026-09-01 para el Módulo 1.
 
-## Stack seleccionado (v1 — bajo revisión)
+## Stack v2 — Módulo 1 (decidido 2026-09-01)
+
+| Capa | Tecnología | Por qué |
+|---|---|---|
+| **Backend** | Python + FastAPI | Mismo lenguaje que usará el Módulo 3 (IA/OCR es un ecosistema Python-first) — evita mantener dos lenguajes. |
+| **ORM** | SQLAlchemy 2.0 | Permite migrar de SQLite a PostgreSQL más adelante cambiando una variable de configuración, sin reescribir código. |
+| **Base de datos** | SQLite para empezar | Es un archivo, no un servidor — cero infraestructura para arrancar. Se migra a PostgreSQL cuando haga falta (multiusuario real, más volumen). |
+
+Implementación en `backend/` — ver `backend/README.md`.
+
+## Stack seleccionado (v1 — histórico, ya no aplica)
 
 | Capa | Tecnología | Justificación |
 |---|---|---|

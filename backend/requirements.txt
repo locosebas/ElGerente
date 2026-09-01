@@ -1,0 +1,5 @@
+sqlalchemy>=2.0,<3.0
+
+# Para el siguiente paso (capa de API del Módulo 1), no se usan todavía:
+fastapi>=0.115,<1.0
+uvicorn>=0.30,<1.0
