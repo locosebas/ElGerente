@@ -1,9 +1,9 @@
 # Stack Tecnológico — El Gerente
 
 **Fecha**: 2026-04-10  
-**Estado**: Decisión tomada — aprobada en sesión de brainstorming
+**Estado**: ⚠️ En revisión — el alcance cambió el 2026-09-01 (ver `analysis/00-vision/vision.md`). Este stack se diseñó para una plataforma multi-tenant web+mobile hosteada en Fury; el MVP ahora es un chatbot de WhatsApp para una sola empresa. Se mantiene como referencia mientras se decide el stack v2.
 
-## Stack seleccionado
+## Stack seleccionado (v1 — bajo revisión)
 
 | Capa | Tecnología | Justificación |
 |---|---|---|
@@ -12,7 +12,7 @@
 | **Mobile** | React Native (Expo) | Misma base React que el web — un equipo maneja los dos. Acceso a cámara para OCR de cédulas y facturas. |
 | **Base de datos** | PostgreSQL | Multi-tenant via schemas. Robusto, open source, portátil entre entornos. |
 | **Cache / sesiones** | Redis | Sesiones de usuario, respuestas rápidas, streams locales en dev. |
-| **Archivos** | Adaptador (S3 / Fury OS / disco) | Fotos de facturas, documentos. Intercambiable por entorno. |
+| **Archivos** | Adaptador (S3 / disco) | Fotos de facturas, documentos. Intercambiable por entorno. |
 
 ## Principio de separación
 

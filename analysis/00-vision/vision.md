@@ -1,49 +1,55 @@
-# Visión del Proyecto — El Gerente
+# Visión del Proyecto — El Gerente (v2)
 
-**Fecha de inicio**: 2026-04-10  
-**Estado**: En definición — sesión de brainstorming activa
+**Fecha de pivote**: 2026-09-01  
+**Estado**: En definición — pivote de alcance respecto a la v1
 
-## Idea central
+## Qué cambió respecto a la v1
 
-Plataforma web + mobile para propietarios de pequeños negocios (cualquier tipo, genérico), que centraliza la administración del negocio con ayuda de IA. El dueño no necesita conocimientos contables ni técnicos.
+La primera sesión de brainstorming (2026-04-10) definió una plataforma SaaS multi-tenant genérica para PYMEs, con roles operativos tipo restaurante (mesero, cocina, repartidor) y hosting inicial en Fury (MercadoLibre). Esos documentos se archivaron en `analysis/_archive/2026-04-10-v1-plataforma-multitenant/` — no se borraron porque algunas ideas (RBAC adaptativo, plan de extracción a microservicios) pueden reutilizarse más adelante, pero ya no reflejan la dirección actual del proyecto.
 
-## Objetivo real (deeper purpose)
+Se descarta el hosting en Fury por completo: ya no hay acceso a esa plataforma. Ver detalle de la decisión en `2026-09-01-sesion-inicial.md`.
 
-Acumular datos estructurados de cada negocio para:
-1. Detectar ineficiencias y costos ocultos en la operación
-2. Llevar contabilidad formal
-3. Llevar para-contabilidad (registro de transacciones internas, no formales)
+## Idea central (v2)
 
-## Capacidades clave identificadas
+Herramienta para gestionar la contabilidad de **una empresa propia** — no multi-tenant, al menos no en el MVP: facturas internas y externas, contratos, y consignaciones (dinero, servicios como energía, etc.). La interfaz inicial es un **chatbot de WhatsApp**, no una app web ni mobile. Más adelante, una app nativa consumible desde las App Stores.
 
-### Capa de datos / contabilidad
-- **Contabilidad**: registro formal de ingresos, gastos, facturas
-- **Para-contabilidad**: transacciones internas (no formales) — gastos sin factura, préstamos del dueño, etc.
-- **Inventario**: control de stock
-- **Análisis de ineficiencias**: cruzar datos para detectar costos ocultos, fugas
+## Principios
 
-### Capa de IA / agente
-- **Agente de adaptación**: puede modificar esquemas de DB y UI por tipo de negocio
-- Principio: **ediciones pequeñas y eficientes** — minimizar costo agentico
-- Lectura de facturas con OCR + extracción de datos
-- Posiblemente: detección de anomalías en transacciones
+- **Determinística primero, IA donde aporta valor real**: la lógica de negocio (cálculos, reglas contables, flujos de registro) es código normal, determinístico y auditable. La IA se reserva para tareas que realmente la necesitan: lectura y extracción de datos de facturas, contratos y comprobantes de consignación (foto/PDF → datos estructurados).
+- **Auditable por el dueño**: el dueño del proyecto no domina las herramientas técnicas involucradas. Cada decisión de arquitectura relevante debe explicarse en términos simples *antes* de implementarse, para que pueda revisarla y aprobarla — no solo confiar en que "funciona".
+- **Empieza pequeño, no cierres puertas**: se construye para resolver el caso propio primero, evitando decisiones que hagan imposible ofrecerlo como producto a otras empresas más adelante (ver `_archive/.../business-model.md` para ideas de monetización que podrían retomarse).
 
-### Plataforma
-- Web (desktop) + Mobile (app o PWA)
-- Genérico: cualquier negocio pequeño sin especialización vertical
+## Capacidades clave (v2)
+
+### Registro vía WhatsApp
+- Registrar facturas (emitidas y recibidas)
+- Registrar contratos
+- Registrar consignaciones (dinero, servicios como energía, etc.)
+- Consultar estado de cuentas / balances vía chat
+
+### Capa IA (puntual, no central)
+- Lectura de facturas (foto/PDF → datos estructurados)
+- Lectura de contratos (extracción de términos clave)
+- Lectura de comprobantes de consignación
+
+### Futuro
+- App nativa (App Store / Play Store) como interfaz adicional, no como reemplazo del chat
+- Posible expansión a producto multi-tenant si el enfoque propio valida el modelo
 
 ## Preguntas abiertas
 
-- ¿Quién analiza los datos para detectar ineficiencias? ¿El dueño del negocio vía dashboard, o un operador externo (quien construye el producto)?
-- ¿La para-contabilidad es visible para alguien más fuera del dueño?
-- ¿El agente de adaptación actúa solo o requiere aprobación del dueño?
-- ¿Cuántos negocios simultáneos puede manejar un usuario?
-- Stack tecnológico preferido
+- ¿Qué proveedor de WhatsApp Business API se usa (Meta Cloud API directo, Twilio, otro)? — pendiente de módulo de aprendizaje.
+- ¿Un solo negocio o varias empresas del mismo dueño desde el día 1?
+- ¿Cómo se garantiza que las lecturas de IA (facturas/contratos) sean auditables? Propuesta a validar: guardar siempre el documento original + el dato extraído + nivel de confianza del modelo, y pedir confirmación al usuario antes de dar el dato por bueno.
+- ¿Cumplimiento DIAN (factura electrónica) desde el día 1, o registro interno primero? — `analysis/04-data-model/data-requirements-research.md` sigue vigente para esto.
 
-## Decisiones tomadas
+## Decisiones tomadas (v2)
 
 | Decisión | Valor | Fecha |
 |---|---|---|
-| Plataforma | Web + Mobile | 2026-04-10 |
-| Verticales | Genérico (adaptativo) | 2026-04-10 |
-| Propósito profundo | Acumulación de datos → detección de ineficiencias | 2026-04-10 |
+| Interfaz inicial | Chatbot de WhatsApp | 2026-09-01 |
+| Alcance inicial | Una empresa propia (no multi-tenant) | 2026-09-01 |
+| Filosofía técnica | Determinística + IA puntual para lectura de documentos | 2026-09-01 |
+| Hosting Fury/MercadoLibre | Descartado — sin acceso | 2026-09-01 |
+| Interfaz futura | App nativa App Store / Play Store | 2026-09-01 |
+| Forma de trabajo | Aprendizaje guiado: cada herramienta se explica antes de usarse | 2026-09-01 |
