@@ -9,7 +9,7 @@ pytest --collect-only -q
 
 Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 
-**Estado actual: 59 pruebas, todas en verde** (`pytest` → 59 passed). Módulo 1 + interfaz gráfica completos.
+**Estado actual: 65 pruebas, todas en verde** (`pytest` → 65 passed). Módulo 1 + interfaz gráfica + endurecimiento (resiliencia, logs, salud).
 
 ---
 
@@ -110,6 +110,15 @@ Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 | id | tipo | verifica | estado |
 |---|---|---|---|
 | `test_no_hay_migracion_pendiente` | integración | el esquema de los modelos = el de las migraciones Alembic | ✅ |
+
+### servicio y resiliencia — `tests/integration/test_servicio.py`
+
+| id | tipo | verifica | estado |
+|---|---|---|---|
+| `test_salud_ok` | integración | `GET /salud` → `{estado: ok, base_de_datos: true}` | ✅ |
+| `test_error_inesperado_devuelve_500_generico` | integración | fallo simulado → 500 genérico sin filtrar internos; el servidor sigue vivo | ✅ |
+| `test_domain_error_se_registra_pero_responde_limpio` | integración | error de dominio → código + mensaje claro | ✅ |
+| `test_validacion_devuelve_422_con_detalle` | integración | 3 payloads inválidos → 422 con `detail` | ✅ |
 
 ---
 

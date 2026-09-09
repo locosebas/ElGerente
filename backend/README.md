@@ -6,11 +6,14 @@ funcional es una carpeta autocontenida. La documentación viva está en
 
 ## Estado
 
-- **Módulo 1 — motor contable**: completo, 56 tests en verde.
+- **Módulo 1 — motor contable**: completo, 65 tests en verde.
   Features: `contabilidad-nucleo`, `balance`, `terceros`, `facturas`, `pagos`,
   `contratos`, `movimientos` (ver [`../docs/features/README.md`](../docs/features/README.md)).
+- **Interfaz gráfica HTML** en `/`: completa.
+- **Endurecimiento** (resiliencia a fallos, logs, `/salud`, imagen Docker): completo — ver
+  [`../docs/arquitectura/resiliencia-y-logs.md`](../docs/arquitectura/resiliencia-y-logs.md)
+  y [`../docs/arquitectura/despliegue.md`](../docs/arquitectura/despliegue.md).
 - **Módulo 2 — WhatsApp**: pendiente.
-- **Interfaz gráfica HTML**: pendiente.
 
 ## Estructura
 
@@ -50,8 +53,21 @@ cp .env.example .env
 .venv/bin/alembic upgrade head        # crea elgerente.db con todas las tablas
 .venv/bin/python -m app.seed          # siembra el plan de cuentas
 
-.venv/bin/uvicorn app.main:app --reload   # http://localhost:8000/docs
+.venv/bin/uvicorn app.main:app --reload
+# http://localhost:8000/       interfaz gráfica
+# http://localhost:8000/docs   API
+# http://localhost:8000/salud  chequeo de salud
 ```
+
+### Con Docker (app + PostgreSQL)
+
+```bash
+# desde la raíz del repo:
+cp .env.docker.example .env.docker
+docker compose --env-file .env.docker up --build
+```
+
+Ver [`../docs/arquitectura/despliegue.md`](../docs/arquitectura/despliegue.md).
 
 ## Tests
 

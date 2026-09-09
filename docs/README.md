@@ -11,7 +11,7 @@ documentación viva: si el código cambia, esto cambia con él.
 
 | Carpeta | Qué contiene |
 |---|---|
-| [`arquitectura/`](arquitectura/) | Las decisiones técnicas transversales: capas, por qué async, cómo funciona la base de datos y las migraciones, cómo se prueba |
+| [`arquitectura/`](arquitectura/) | Las decisiones técnicas transversales: capas, por qué async, base de datos y migraciones, testing, resiliencia y logs, despliegue con Docker |
 | [`aprendizaje/`](aprendizaje/) | "Submódulos de aprendizaje": explicaciones en lenguaje simple de cada concepto o herramienta *antes* de usarla, para que el dueño pueda auditar el trabajo |
 | [`features/`](features/) | Una carpeta por **feature** (parte funcional del programa), cada una con su `spec.md`. Más el [índice](features/README.md) y el [catálogo de pruebas](features/pruebas.md) |
 
