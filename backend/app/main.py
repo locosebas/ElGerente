@@ -6,8 +6,11 @@ docs/arquitectura/vision-tecnica.md.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 # Registra todas las tablas en Base.metadata.
 import app.models  # noqa: F401
@@ -17,6 +20,8 @@ from app.features.contratos.router import router as contratos_router
 from app.features.facturas.router import router as facturas_router
 from app.features.movimientos.router import router as movimientos_router
 from app.features.terceros.router import router as terceros_router
+
+_WEB = Path(__file__).parent / "web"
 
 
 def create_app() -> FastAPI:
@@ -31,6 +36,14 @@ def create_app() -> FastAPI:
     app.include_router(contratos_router)
     app.include_router(movimientos_router)
     app.include_router(contabilidad_router)
+
+    # Interfaz gráfica HTML (feature web-ui). Se monta al final: las rutas de la
+    # API ya están registradas y tienen prioridad. Ver docs/features/web-ui/spec.md.
+    app.mount("/static", StaticFiles(directory=_WEB), name="static")
+
+    @app.get("/", include_in_schema=False)
+    async def _home() -> FileResponse:
+        return FileResponse(_WEB / "index.html")
 
     return app
 
