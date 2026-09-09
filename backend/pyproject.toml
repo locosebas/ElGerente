@@ -1,0 +1,55 @@
+[project]
+name = "elgerente-backend"
+version = "0.1.0"
+description = "El Gerente — motor contable (Módulo 1) + interfaz de WhatsApp (Módulo 2)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.30,<1.0",
+    "sqlalchemy[asyncio]>=2.0.36,<3.0",
+    "aiosqlite>=0.20,<1.0",
+    "alembic>=1.13,<2.0",
+    "pydantic>=2.9,<3.0",
+    "pydantic-settings>=2.5,<3.0",
+    "httpx>=0.27,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3,<9.0",
+    "pytest-asyncio>=0.24,<1.0",
+    "anyio>=4.6,<5.0",
+    "ruff>=0.7,<1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+# Todos los tests son async: cada `async def test_...` se ejecuta sin decorador extra.
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
+markers = [
+    "integration: prueba de extremo a extremo contra la app real (usar `-m \"not integration\"` para saltarlas)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    "B008",   # Depends(...) en defaults es el idiom de FastAPI
+    "UP042",  # `class X(str, Enum)` es intencional (compat con SQLAlchemy/Pydantic)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Migraciones: código generado por Alembic, se revisa a mano pero no se reformatea.
+"alembic/versions/*" = ["E501"]

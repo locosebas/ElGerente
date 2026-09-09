@@ -1,9 +1,11 @@
 .superpowers/
 
-# Backend Python (Módulo 1)
+# Backend Python
 backend/.venv/
-backend/__pycache__/
-backend/app/__pycache__/
-backend/*.db
+.venv/
 __pycache__/
 *.pyc
+backend/*.db
+backend/.env
+.pytest_cache/
+.ruff_cache/
