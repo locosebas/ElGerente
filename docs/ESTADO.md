@@ -4,7 +4,7 @@ _Última actualización: 2026-09-09_
 
 Resumen: el **Módulo 1 (motor contable)**, su **interfaz gráfica HTML** y el
 **endurecimiento** (resiliencia a fallos, logs, endpoint de salud, imagen Docker) están
-listos — arquitectura por features, base de datos asíncrona, **65 pruebas en verde**.
+listos — arquitectura por features, base de datos asíncrona, **66 pruebas en verde**.
 Listo para montar en local y probar con clientes de verdad. Falta el Módulo 2 (WhatsApp).
 
 ---
@@ -18,6 +18,7 @@ Listo para montar en local y probar con clientes de verdad. Falta el Módulo 2 (
 | 2 | Migrar Módulo 1 a async + arquitectura por features + tests | ✅ hecho — 56 tests en verde |
 | 2b | Interfaz gráfica HTML del Módulo 1 | ✅ hecho — 59 tests |
 | 2c | Endurecimiento: congruencia, resiliencia a fallos, logs, `/salud`, Docker | ✅ hecho — 65 tests |
+| 2d | Mapa de navegación del código para mantenimiento barato (`docs/MAPA.md`, índice generado, `CLAUDE.md`) | ✅ hecho — 66 tests |
 | 3 | Documentación del Módulo 2 (specs de las features de WhatsApp) | ⬜ pendiente |
 | 4 | Construir el Módulo 2 (webhook, conversaciones, asistente, flujos) | ⬜ pendiente |
 | 5 | Cierre (script de simulación, catálogo final, READMEs) | ⬜ pendiente |
@@ -95,19 +96,25 @@ backend/
   scripts/reset_db.py       borra la BD, migra y siembra (desarrollo)
   tests/
     unit/                   34 tests — reglas de negocio, servicios llamados directo
-    integration/            31 tests — app real vía httpx.AsyncClient + SQLite temporal
+    integration/            32 tests — app real vía httpx.AsyncClient + SQLite temporal
 
+scripts/generar_mapa.py     regenera docs/_generado/indice-codigo.md
 docker-compose.yml          app + PostgreSQL para probar en local
 .env.docker.example
+
+CLAUDE.md                   punto de entrada para sesiones de IA (apunta a docs/MAPA.md)
 
 docs/
   README.md                índice de la documentación
   ESTADO.md                este archivo
+  MAPA.md                  navegación del código para mantenimiento (tarea -> archivo + símbolo)
+  _generado/
+    indice-codigo.md       índice de todos los símbolos (generado por scripts/generar_mapa.py)
   arquitectura/            vision-tecnica, base-de-datos, testing, resiliencia-y-logs, despliegue
   aprendizaje/             partida-doble, que-es-una-api, async-await, deterministico-vs-ia
   features/
     README.md              índice de las 17 features con su estado
-    pruebas.md             catálogo de las 65 pruebas
+    pruebas.md             catálogo de las 66 pruebas
     <feature>/spec.md      una por feature (las 7 del Módulo 1 + web-ui)
 ```
 
@@ -125,8 +132,8 @@ docs/
 
 ## Pruebas
 
-- **65 pruebas, todas pasan.** `pytest` desde `backend/`.
-- 34 unitarias + 31 de integración.
+- **66 pruebas, todas pasan.** `pytest` desde `backend/`.
+- 34 unitarias + 32 de integración.
 - Cubren: reglas contables, generación de asientos, libros oficial/interno, la API de punta
   a punta, la interfaz gráfica, que modelos y migraciones no se separen, y la resiliencia
   (500 genérico ante fallos, `/salud`, errores de dominio y validación).
@@ -144,7 +151,7 @@ uv venv --python 3.12
 uv pip install -e ".[dev]"
 cp .env.example .env
 
-.venv/bin/python -m pytest -q            # -> 65 passed
+.venv/bin/python -m pytest -q            # -> 66 passed
 .venv/bin/ruff check .                   # -> All checks passed
 
 .venv/bin/alembic upgrade head

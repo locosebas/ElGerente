@@ -9,7 +9,7 @@ pytest --collect-only -q
 
 Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 
-**Estado actual: 65 pruebas, todas en verde** (`pytest` → 65 passed). Módulo 1 + interfaz gráfica + endurecimiento (resiliencia, logs, salud).
+**Estado actual: 66 pruebas, todas en verde** (`pytest` → 66 passed). Módulo 1 + interfaz gráfica + endurecimiento (resiliencia, logs, salud) + mapa de código.
 
 ---
 
@@ -119,6 +119,12 @@ Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 | `test_error_inesperado_devuelve_500_generico` | integración | fallo simulado → 500 genérico sin filtrar internos; el servidor sigue vivo | ✅ |
 | `test_domain_error_se_registra_pero_responde_limpio` | integración | error de dominio → código + mensaje claro | ✅ |
 | `test_validacion_devuelve_422_con_detalle` | integración | 3 payloads inválidos → 422 con `detail` | ✅ |
+
+### mapa de código — `tests/integration/test_mapa.py`
+
+| id | tipo | verifica | estado |
+|---|---|---|---|
+| `test_indice_codigo_actualizado` | integración | `docs/_generado/indice-codigo.md` coincide con lo que produce `scripts/generar_mapa.py` | ✅ |
 
 ---
 

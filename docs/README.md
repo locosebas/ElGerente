@@ -16,6 +16,7 @@ documentación viva: si el código cambia, esto cambia con él.
 | [`features/`](features/) | Una carpeta por **feature** (parte funcional del programa), cada una con su `spec.md`. Más el [índice](features/README.md) y el [catálogo de pruebas](features/pruebas.md) |
 
 **➡ [`ESTADO.md`](ESTADO.md) — qué está hecho y qué falta, de un vistazo.**
+**➡ [`MAPA.md`](MAPA.md) — navegación del código para mantenimiento (qué archivo tocar para cada cambio).**
 
 ## Regla de trabajo: plan → documentación → código
 
