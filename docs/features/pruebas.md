@@ -9,7 +9,7 @@ pytest --collect-only -q
 
 Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 
-**Estado actual: 56 pruebas, todas en verde** (`pytest` → 56 passed). Módulo 1 completo.
+**Estado actual: 59 pruebas, todas en verde** (`pytest` → 59 passed). Módulo 1 + interfaz gráfica completos.
 
 ---
 
@@ -123,5 +123,6 @@ _(pendiente: se completa en la Etapa 3, al escribir los specs de las features 8�
 
 | id | tipo | verifica | estado |
 |---|---|---|---|
-| `test_home_sirve_html` | integración | `GET /` → 200, `text/html` | ⬜ |
-| `test_estaticos_se_sirven` | integración | `GET /static/app.js` y `/static/styles.css` → 200 | ⬜ |
+| `test_home_sirve_html` | integración | `GET /` → 200, `text/html`, referencia los estáticos | ✅ |
+| `test_estaticos_se_sirven` | integración | `GET /static/app.js` y `/static/styles.css` → 200 | ✅ |
+| `test_api_sigue_respondiendo_con_ui_montada` | integración | `GET /cuentas` → 200 JSON con el StaticFiles montado en `/` | ✅ |

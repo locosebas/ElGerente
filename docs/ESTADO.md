@@ -2,9 +2,9 @@
 
 _Última actualización: 2026-09-09_
 
-Resumen: el **Módulo 1 (motor contable)** está completo — migrado a arquitectura por
-features y base de datos asíncrona, con 56 pruebas en verde. La documentación por feature
-existe y está al día. Falta la interfaz gráfica HTML y todo el Módulo 2 (WhatsApp).
+Resumen: el **Módulo 1 (motor contable)** y su **interfaz gráfica HTML** están completos —
+arquitectura por features, base de datos asíncrona, 59 pruebas en verde. La documentación
+por feature está al día. Falta todo el Módulo 2 (WhatsApp).
 
 ---
 
@@ -15,8 +15,8 @@ existe y está al día. Falta la interfaz gráfica HTML y todo el Módulo 2 (Wha
 | 0 | Esqueleto y herramientas (pyproject, config, engine async, Alembic, fixtures de test) | ✅ hecho |
 | 1 | Documentación del Módulo 1 (7 specs + arquitectura + aprendizaje) | ✅ hecho |
 | 2 | Migrar Módulo 1 a async + arquitectura por features + tests | ✅ hecho — 56 tests en verde |
-| 2b | Interfaz gráfica HTML del Módulo 1 | ⬜ pendiente — **lo próximo** |
-| 3 | Documentación del Módulo 2 (specs de las features de WhatsApp) | ⬜ pendiente |
+| 2b | Interfaz gráfica HTML del Módulo 1 | ✅ hecho — 3 tests más (59 en total) |
+| 3 | Documentación del Módulo 2 (specs de las features de WhatsApp) | ⬜ pendiente — **lo próximo** |
 | 4 | Construir el Módulo 2 (webhook, conversaciones, asistente, flujos) | ⬜ pendiente |
 | 5 | Cierre (script de simulación, catálogo final, READMEs) | ⬜ pendiente |
 
@@ -58,7 +58,7 @@ Leyenda: ✅ hecho y verificado · 🟨 en progreso · ⬜ pendiente
 
 | # | Feature | Estado | Notas |
 |---|---|---|---|
-| 17 | `web-ui` (interfaz gráfica HTML) | ⬜ | servida por el backend, JavaScript plano, sin build |
+| 17 | `web-ui` (interfaz gráfica HTML) | ✅ | 6 pantallas (balance, libro diario, terceros, facturas, contratos, movimiento manual); servida en `/` |
 
 ---
 
@@ -79,13 +79,14 @@ backend/
       pagos/                pagar/cobrar factura -> asiento automático + estado
       contratos/            registro informativo (no toca contabilidad)
       movimientos/          asiento manual: oficial (con soporte) / interno (para-contabilidad)
-    main.py                 create_app(): ensambla routers + traduce errores a HTTP
+    web/                  interfaz gráfica: index.html + app.js + styles.css (JS plano)
+    main.py                 create_app(): routers + errores a HTTP + monta la interfaz en /
     models.py               agregador de modelos (para Alembic y tests)
     seed.py                 siembra el plan de cuentas (NO crea tablas)
   scripts/reset_db.py       borra la BD, migra y siembra (desarrollo)
   tests/
     unit/                   34 tests — reglas de negocio, servicios llamados directo
-    integration/            22 tests — app real vía httpx.AsyncClient + SQLite temporal
+    integration/            25 tests — app real vía httpx.AsyncClient + SQLite temporal
 
 docs/
   README.md                índice de la documentación
@@ -94,8 +95,8 @@ docs/
   aprendizaje/             partida-doble, que-es-una-api, async-await, deterministico-vs-ia
   features/
     README.md              índice de las 17 features con su estado
-    pruebas.md             catálogo de las 56 pruebas
-    <feature>/spec.md      una por feature del Módulo 1 (las 7 están escritas)
+    pruebas.md             catálogo de las 59 pruebas
+    <feature>/spec.md      una por feature (las 7 del Módulo 1 + web-ui)
 ```
 
 ### Endpoints disponibles (Módulo 1)
@@ -104,14 +105,15 @@ docs/
 `POST /facturas/{id}/pagar` · `POST/GET /contratos` · `POST /movimientos` ·
 `GET /cuentas` · `GET /asientos` (filtro `?libro=`) · `GET /balance` (`?incluir_interna=`)
 
-Documentación interactiva en `http://localhost:8000/docs` cuando el servidor corre.
+- `http://localhost:8000/` → interfaz gráfica HTML
+- `http://localhost:8000/docs` → documentación interactiva de la API
 
 ---
 
 ## Pruebas
 
-- **56 pruebas, todas pasan.** `pytest` desde `backend/`.
-- 34 unitarias + 22 de integración.
+- **59 pruebas, todas pasan.** `pytest` desde `backend/`.
+- 34 unitarias + 25 de integración.
 - Incluye un test que verifica que el esquema de los modelos y el de las migraciones no se
   separen (`test_no_hay_migracion_pendiente`).
 - Catálogo completo con una línea por test: [`features/pruebas.md`](features/pruebas.md).
@@ -126,12 +128,12 @@ uv venv --python 3.12
 uv pip install -e ".[dev]"
 cp .env.example .env
 
-.venv/bin/python -m pytest -q            # -> 56 passed
+.venv/bin/python -m pytest -q            # -> 59 passed
 .venv/bin/ruff check .                   # -> All checks passed
 
 .venv/bin/alembic upgrade head
 .venv/bin/python -m app.seed
-.venv/bin/uvicorn app.main:app --reload  # http://localhost:8000/docs
+.venv/bin/uvicorn app.main:app --reload  # http://localhost:8000/  (interfaz)  y  /docs (API)
 ```
 
 ---
@@ -154,7 +156,8 @@ cp .env.example .env
 
 ## Lo próximo
 
-**Etapa 2b — interfaz gráfica HTML del Módulo 1.** Pantallas: balance, libro diario,
-terceros, facturas (con "pagar"), contratos, movimiento manual. Servida por el backend,
-JavaScript plano, sin paso de build. Primero su `spec.md`, después el código, después su
-prueba de que las páginas se sirven.
+**Etapa 3 — documentar el Módulo 2 (WhatsApp).** Escribir el `spec.md` de cada feature de
+WhatsApp (proveedor, webhook, conversaciones, asistente, y los flujos de factura, pago,
+contrato, movimiento y consulta de balance): payloads de ejemplo, pasos de cada flujo,
+textos del menú y de la ayuda, tabla `conversacion`. Después, la Etapa 4 los construye.
+Recordatorio: **el chatbot es 100 % determinístico**.

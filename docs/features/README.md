@@ -43,7 +43,7 @@ Leyenda: ⬜ pendiente · 🟨 en progreso · ✅ hecho y verificado
 
 | # | Feature | Estado | Spec | Código | Tests |
 |---|---|---|---|---|---|
-| 17 | `web-ui` (interfaz gráfica HTML) | ⬜ | _(pendiente)_ | `app/web/` | `pytest tests/integration/test_web_ui.py` |
+| 17 | `web-ui` (interfaz gráfica HTML del Módulo 1) | ✅ | [spec](web-ui/spec.md) | `app/web/` | `pytest tests/integration/test_web_ui.py` |
 
 ## Orden de construcción
 
