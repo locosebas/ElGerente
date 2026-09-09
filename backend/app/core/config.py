@@ -26,10 +26,22 @@ class Settings(BaseSettings):
     meta_phone_number_id: str = ""
 
     entorno: Literal["dev", "prod"] = "dev"
+    log_level: str = "INFO"
 
     @property
     def es_dev(self) -> bool:
         return self.entorno == "dev"
+
+    @property
+    def database_url_sin_credenciales(self) -> str:
+        """La URL de la BD con la contraseña oculta, para logs."""
+        url = self.database_url
+        if "@" in url and "//" in url:
+            esquema, resto = url.split("//", 1)
+            credenciales, host = resto.split("@", 1)
+            usuario = credenciales.split(":", 1)[0]
+            return f"{esquema}//{usuario}:***@{host}"
+        return url
 
 
 @lru_cache

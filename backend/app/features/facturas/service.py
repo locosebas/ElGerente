@@ -13,10 +13,12 @@ from app.contabilidad import codigos
 from app.contabilidad.asientos import crear_asiento, cuenta_requerida
 from app.contabilidad.models import LibroContable, LineaAsiento, OrigenAsiento
 from app.core.errors import NoEncontrado
+from app.core.logging import log
 from app.features.facturas.models import EstadoFactura, Factura, TipoFactura
 from app.features.terceros.service import obtener_tercero
 
 _CERO = Decimal("0")
+_log = log("facturas")
 
 
 async def registrar_factura(
@@ -79,6 +81,14 @@ async def registrar_factura(
     session.add(factura)
     await session.commit()
     await session.refresh(factura)
+    _log.info(
+        "Factura %s registrada — #%d tipo=%s tercero=%d total=%s",
+        factura.numero,
+        factura.id,
+        factura.tipo.value,
+        tercero_id,
+        total,
+    )
     return factura
 
 

@@ -61,7 +61,10 @@ async def client(session_factory) -> AsyncGenerator[AsyncClient, None]:
             yield session
 
     app.dependency_overrides[get_db] = _get_db_test
-    transport = ASGITransport(app=app)
+    # raise_app_exceptions=False: los tests ven la respuesta HTTP real (incluido
+    # un 500 con su cuerpo) como la vería un cliente, en vez de recibir la
+    # excepción de Python.
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
 

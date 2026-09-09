@@ -3,8 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.contabilidad.router import serializar_asiento
 from app.contabilidad.schemas import AsientoOut
+from app.contabilidad.serializers import serializar_asiento
 from app.core.db import get_db
 from app.features.movimientos import service
 from app.features.movimientos.schemas import MovimientoManualCreate

@@ -5,7 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import NoEncontrado
+from app.core.logging import log
 from app.features.terceros.models import Tercero, TipoTercero
+
+_log = log("terceros")
 
 
 async def crear_tercero(
@@ -15,6 +18,7 @@ async def crear_tercero(
     session.add(tercero)
     await session.commit()
     await session.refresh(tercero)
+    _log.info("Tercero #%d creado — %s (%s)", tercero.id, nombre, tipo.value)
     return tercero
 
 

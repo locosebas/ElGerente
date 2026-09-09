@@ -16,8 +16,10 @@ from app.contabilidad.asientos import (
 )
 from app.contabilidad.models import Asiento, LibroContable, LineaAsiento, OrigenAsiento
 from app.core.errors import DatosInvalidos, NoEncontrado
+from app.core.logging import log
 
 _CERO = Decimal("0")
+_log = log("movimientos")
 
 
 async def registrar_movimiento_manual(
@@ -61,6 +63,12 @@ async def registrar_movimiento_manual(
         raise DatosInvalidos(str(exc)) from exc
 
     await session.commit()
+    _log.info(
+        "Movimiento manual registrado — asiento #%d libro=%s lineas=%d",
+        asiento.id,
+        libro.value,
+        len(lineas_orm),
+    )
     # No se hace refresh: `asiento` ya tiene sus líneas y cuentas cargadas en
     # memoria, y `expire_on_commit=False` las mantiene accesibles. Un refresh
     # expiraría las relaciones y forzaría una carga perezosa (que async prohíbe).

@@ -8,33 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.contabilidad.balance import calcular_balance
 from app.contabilidad.models import Asiento, Cuenta, LibroContable
 from app.contabilidad.schemas import AsientoOut, CuentaOut, SaldoCuenta
+from app.contabilidad.serializers import serializar_asiento
 from app.core.db import get_db
 
 router = APIRouter(tags=["contabilidad"])
-
-
-def serializar_asiento(asiento: Asiento) -> dict:
-    """AsientoOut necesita cuenta_codigo/cuenta_nombre por línea, que viven
-    en la cuenta relacionada — por eso no se devuelve el objeto ORM tal cual.
-    """
-    return {
-        "id": asiento.id,
-        "fecha": asiento.fecha,
-        "descripcion": asiento.descripcion,
-        "origen": asiento.origen,
-        "libro": asiento.libro,
-        "documento_soporte": asiento.documento_soporte,
-        "created_at": asiento.created_at,
-        "lineas": [
-            {
-                "cuenta_codigo": linea.cuenta.codigo,
-                "cuenta_nombre": linea.cuenta.nombre,
-                "debito": linea.debito,
-                "credito": linea.credito,
-            }
-            for linea in asiento.lineas
-        ],
-    }
 
 
 @router.get("/cuentas", response_model=list[CuentaOut])

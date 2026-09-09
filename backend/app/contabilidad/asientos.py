@@ -21,6 +21,9 @@ from app.contabilidad.models import (
     OrigenAsiento,
 )
 from app.core.errors import DatosInvalidos, DomainError
+from app.core.logging import log
+
+_log = log("contabilidad")
 
 
 class DocumentoSoporteRequerido(DatosInvalidos):
@@ -91,10 +94,23 @@ async def crear_asiento(
     if not asiento.cuadra():
         total_debito = sum((linea.debito for linea in lineas), Decimal("0"))
         total_credito = sum((linea.credito for linea in lineas), Decimal("0"))
+        _log.error(
+            "Asiento descuadrado rechazado — origen=%s debito=%s credito=%s",
+            origen.value,
+            total_debito,
+            total_credito,
+        )
         raise AsientoDesbalanceado(
             f"Asiento no cuadra: debito={total_debito} credito={total_credito}"
         )
 
     session.add(asiento)
     await session.flush()
+    _log.info(
+        "Asiento #%d creado — origen=%s libro=%s lineas=%d",
+        asiento.id,
+        origen.value,
+        libro.value,
+        len(lineas),
+    )
     return asiento

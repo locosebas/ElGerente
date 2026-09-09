@@ -10,10 +10,12 @@ from app.contabilidad import codigos
 from app.contabilidad.asientos import crear_asiento, cuenta_requerida
 from app.contabilidad.models import LibroContable, LineaAsiento, OrigenAsiento
 from app.core.errors import Conflicto, DatosInvalidos
+from app.core.logging import log
 from app.features.facturas.models import EstadoFactura, Factura, TipoFactura
 from app.features.facturas.service import obtener_factura
 
 _CERO = Decimal("0")
+_log = log("pagos")
 
 
 async def pagar_factura(
@@ -60,4 +62,12 @@ async def pagar_factura(
     factura.estado = EstadoFactura.PAGADA
     await session.commit()
     await session.refresh(factura)
+    _log.info(
+        "Factura %s (#%d) liquidada — %s por %s vía %s",
+        factura.numero,
+        factura.id,
+        "pago" if factura.tipo == TipoFactura.RECIBIDA else "cobro",
+        factura.total,
+        medio_pago,
+    )
     return factura

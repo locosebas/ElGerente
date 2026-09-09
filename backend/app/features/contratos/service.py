@@ -11,8 +11,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DatosInvalidos
+from app.core.logging import log
 from app.features.contratos.models import Contrato
 from app.features.terceros.service import obtener_tercero
+
+_log = log("contratos")
 
 
 async def registrar_contrato(
@@ -39,6 +42,9 @@ async def registrar_contrato(
     session.add(contrato)
     await session.commit()
     await session.refresh(contrato)
+    _log.info(
+        "Contrato #%d registrado — tercero=%d valor=%s", contrato.id, tercero_id, valor
+    )
     return contrato
 
 
