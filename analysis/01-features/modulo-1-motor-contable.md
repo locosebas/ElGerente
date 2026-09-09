@@ -47,8 +47,13 @@ Si el motor contable no es correcto, no importa qué tan buena sea la interfaz. 
 - Modelo de datos definido: `analysis/04-data-model/modulo-1-modelo-datos.md`
 - Stack elegido: `analysis/02-architecture/tech-stack.md`
 - Diseño de API y reglas de negocio: `analysis/02-architecture/modulo-1-api-design.md`
-- Implementado y probado de extremo a extremo (`backend/api_smoke_test.py`): terceros, facturas (emitidas/recibidas) con generación automática de asiento, pago/cobro de facturas, contratos, movimientos manuales (libro oficial con soporte / libro interno sin soporte), plan de cuentas, listado de asientos con filtro por libro, balance por cuenta con opción de incluir lo interno
+- Implementado, migrado a arquitectura por features y base de datos asíncrona, y probado
+  con suite de tests unitarios + integración (56 tests). La documentación viva pasó a
+  `docs/` (una carpeta por feature): ver `docs/features/README.md`. Este archivo queda como
+  registro histórico del análisis; el estado real de cada feature se lleva en `docs/`.
 
 ## Próximo paso
 
-Este entregable ya cumple el alcance definido arriba. Sigue decidir con qué se prueba en la práctica (¿el propio dueño registrando datos reales durante unos días?) antes de pasar al Módulo 2 (interfaz de WhatsApp).
+Este entregable ya cumple el alcance definido arriba. Siguen: la interfaz gráfica HTML del
+Módulo 1 (para que el dueño registre y consulte de verdad) y luego el Módulo 2 (WhatsApp,
+chatbot determinístico). Ver el plan de implementación aprobado y `docs/features/README.md`.

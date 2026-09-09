@@ -1,41 +1,68 @@
-# Backend — Módulo 1 (Motor Contable Básico)
+# Backend — El Gerente
 
-Ver diseño en `../analysis/01-features/modulo-1-motor-contable.md`,
-`../analysis/04-data-model/modulo-1-modelo-datos.md` y, sobre todo,
-`../analysis/02-architecture/modulo-1-api-design.md` (reglas exactas
-de generación automática de asientos — léelo antes de tocar `app/services.py`).
+FastAPI + SQLAlchemy 2.0 (async) + SQLite. Arquitectura **por features**: cada parte
+funcional es una carpeta autocontenida. La documentación viva está en
+[`../docs/`](../docs/) — empezar por [`../docs/README.md`](../docs/README.md).
 
-## Qué hay hasta ahora
+## Estado
 
-- `app/db.py` — conexión a la base de datos (SQLite por ahora)
-- `app/models.py` — tablas: `cuenta`, `tercero`, `asiento`, `linea_asiento`, `factura`, `contrato`
-- `app/schemas.py` — forma de los datos que entran/salen por la API (Pydantic)
-- `app/services.py` — toda la lógica de negocio (generación de asientos, validaciones). Los routers nunca deciden contabilidad por su cuenta.
-- `app/main.py` — endpoints FastAPI: terceros, facturas (con pago), contratos, cuentas, asientos, balance
-- `app/seed.py` — crea las tablas y siembra el plan de cuentas inicial
-- `smoke_test.py` — prueba manual del modelo de datos solo (regla débito=crédito)
-- `api_smoke_test.py` — prueba de extremo a extremo de la API completa (crear tercero, factura, pagar, balance, casos de error)
+- **Módulo 1 — motor contable**: completo, 56 tests en verde.
+  Features: `contabilidad-nucleo`, `balance`, `terceros`, `facturas`, `pagos`,
+  `contratos`, `movimientos` (ver [`../docs/features/README.md`](../docs/features/README.md)).
+- **Módulo 2 — WhatsApp**: pendiente.
+- **Interfaz gráfica HTML**: pendiente.
+
+## Estructura
+
+```
+app/
+  core/            config (.env), engine async, errores de dominio
+  contabilidad/    NÚCLEO: cuenta / asiento / linea_asiento, crear_asiento (partida doble), balance, plan de cuentas
+  features/
+    terceros/      clientes y proveedores
+    facturas/      registrar factura emitida/recibida -> asiento automático
+    pagos/         pagar/cobrar factura -> asiento automático + estado
+    contratos/     registro informativo (sin contabilidad)
+    movimientos/   asiento manual: oficial (con soporte) / interno (para-contabilidad)
+  main.py          create_app(): ensambla los routers + traduce errores de dominio a HTTP
+  models.py        agregador: importa todos los modelos para Alembic y los tests
+  seed.py          siembra el plan de cuentas (NO crea tablas)
+alembic/           migraciones (el esquema se crea con `alembic upgrade head`)
+tests/
+  unit/            reglas de negocio, servicios llamados directo
+  integration/     app completa vía httpx.AsyncClient + SQLite temporal
+scripts/reset_db.py   borra la BD, migra y siembra (solo desarrollo)
+```
+
+Cada feature: `models.py` · `schemas.py` · `service.py` (toda la lógica) · `router.py`
+(solo traduce HTTP) · `exceptions.py` cuando aplica.
 
 ## Cómo correrlo
 
+Este entorno no trae `pip`; se usa [`uv`](https://docs.astral.sh/uv/).
+
 ```bash
 cd backend
-python3 -m venv .venv
-./.venv/bin/pip install -r requirements.txt
+uv venv --python 3.12
+uv pip install -e ".[dev]"
+cp .env.example .env
 
-./.venv/bin/python -m app.seed          # crea elgerente.db y siembra el plan de cuentas
-./.venv/bin/python smoke_test.py        # verifica el modelo de datos
-./.venv/bin/python api_smoke_test.py    # verifica la API completa (borra y recrea elgerente.db)
+.venv/bin/alembic upgrade head        # crea elgerente.db con todas las tablas
+.venv/bin/python -m app.seed          # siembra el plan de cuentas
 
-# Para levantar el servidor y probar a mano (http://localhost:8000/docs trae la UI interactiva):
-./.venv/bin/uvicorn app.main:app --reload
+.venv/bin/uvicorn app.main:app --reload   # http://localhost:8000/docs
 ```
 
-`elgerente.db` se genera localmente y no se sube al repo (ver `.gitignore`).
+## Tests
 
-## Endpoints
+```bash
+.venv/bin/python -m pytest              # toda la suite (56)
+.venv/bin/python -m pytest -m "not integration"   # solo unit
+.venv/bin/python -m pytest --collect-only -q      # listar sin ejecutar
+.venv/bin/ruff check .                  # lint
+```
 
-Ver la tabla completa en `analysis/02-architecture/modulo-1-api-design.md#3-endpoints`.
-Resumen: `POST/GET /terceros`, `POST/GET /facturas`, `GET /facturas/{id}`,
-`POST /facturas/{id}/pagar`, `POST/GET /contratos`, `GET /cuentas`,
-`GET /asientos`, `GET /balance`.
+Detalle en [`../docs/arquitectura/testing.md`](../docs/arquitectura/testing.md) y el
+catálogo completo en [`../docs/features/pruebas.md`](../docs/features/pruebas.md).
+
+`elgerente.db` y `.env` no se suben al repo (ver `.gitignore`).
