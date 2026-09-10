@@ -39,3 +39,23 @@ class SaldoCuenta(BaseModel):
     cuenta_nombre: str
     tipo: TipoCuenta
     saldo: Decimal
+
+
+class MovimientoCuentaOut(BaseModel):
+    asiento_id: int
+    fecha: date
+    descripcion: str
+    origen: OrigenAsiento
+    libro: LibroContable
+    documento_soporte: str | None
+    debito: Decimal
+    credito: Decimal
+    saldo_acumulado: Decimal
+
+
+class DetalleCuentaOut(BaseModel):
+    cuenta_codigo: str
+    cuenta_nombre: str
+    tipo: TipoCuenta
+    saldo_final: Decimal
+    movimientos: list[MovimientoCuentaOut]

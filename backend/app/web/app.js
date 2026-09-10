@@ -38,12 +38,6 @@ async function api(metodo, ruta, cuerpo) {
 const money = (v) =>
   Number(v).toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function celdaSaldo(v) {
-  const n = Number(v);
-  const cls = n < 0 ? ' class="num neg"' : ' class="num"';
-  return `<td${cls}>${money(v)}</td>`;
-}
-
 function celdaDoc(url) {
   if (!url) return "<td>—</td>";
   const seguro = String(url).replace(/"/g, "%22");
@@ -69,36 +63,182 @@ function mostrarTab(nombre) {
 
 window.addEventListener("hashchange", () => mostrarTab(location.hash.replace("#/", "")));
 
-// --- Balance --------------------------------------------------------------
+// --- Controles de análisis (compartidos por Balance y Libro diario) ------
+
+const ANIO_ACTUAL = new Date().getFullYear();
+const MESES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+const LIBRO_NOTA = {
+  oficial: "Oficial: la contabilidad real / externa (asientos con documento de soporte).",
+  interna: "Interno: para-contabilidad — movimientos sin soporte formal (retiros, préstamos...).",
+  todos: 'Total: oficial + interno junto — la caja "real".',
+};
+
+// Estado compartido de los dos controles.
+const analisis = { libro: "oficial", anio: "", mes: "" };
+
+function rangoFechas() {
+  if (!analisis.anio) return {};
+  const y = analisis.anio;
+  if (!analisis.mes) return { desde: `${y}-01-01`, hasta: `${y}-12-31` };
+  const m = Number(analisis.mes);
+  const ultimo = new Date(y, m, 0).getDate();
+  const mm = String(m).padStart(2, "0");
+  return { desde: `${y}-${mm}-01`, hasta: `${y}-${mm}-${String(ultimo).padStart(2, "0")}` };
+}
+
+function paramsAnalisis(paraAsientos = false) {
+  const p = new URLSearchParams();
+  if (!(paraAsientos && analisis.libro === "todos")) p.set("libro", analisis.libro);
+  const { desde, hasta } = rangoFechas();
+  if (desde) p.set("desde", desde);
+  if (hasta) p.set("hasta", hasta);
+  return p.toString();
+}
+
+function montarControles(contenedor, alCambiar) {
+  const anios = [];
+  for (let y = ANIO_ACTUAL; y >= 2024; y--) anios.push(y);
+  contenedor.innerHTML = `
+    <div class="campo">Libro
+      <div class="segmento" data-grupo="libro">
+        <button type="button" data-v="oficial">Oficial</button>
+        <button type="button" data-v="interna">Interno</button>
+        <button type="button" data-v="todos">Total</button>
+      </div>
+    </div>
+    <div class="campo">Periodo
+      <div>
+        <select data-c="anio">
+          <option value="">histórico completo</option>
+          ${anios.map((y) => `<option value="${y}">${y}</option>`).join("")}
+        </select>
+        <select data-c="mes">
+          <option value="">todo el año</option>
+          ${MESES.map((m, i) => `<option value="${i + 1}">${m}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+    <p class="ctrl-nota"></p>`;
+
+  contenedor._sync = () => {
+    $$('.segmento[data-grupo="libro"] button', contenedor).forEach((b) =>
+      b.classList.toggle("activo", b.dataset.v === analisis.libro)
+    );
+    $('[data-c="anio"]', contenedor).value = analisis.anio;
+    $('[data-c="mes"]', contenedor).value = analisis.mes;
+    $('[data-c="mes"]', contenedor).disabled = !analisis.anio;
+    $(".ctrl-nota", contenedor).textContent = LIBRO_NOTA[analisis.libro];
+  };
+  contenedor._sync();
+
+  const propagar = () => {
+    $$(".analisis-ctrl").forEach((c) => c._sync && c._sync());
+    alCambiar().catch((e) => mostrarError(e.message));
+  };
+
+  contenedor.addEventListener("click", (e) => {
+    const b = e.target.closest('.segmento[data-grupo="libro"] button');
+    if (!b) return;
+    analisis.libro = b.dataset.v;
+    propagar();
+  });
+  contenedor.addEventListener("change", (e) => {
+    const c = e.target.closest("[data-c]");
+    if (!c) return;
+    analisis[c.dataset.c] = c.dataset.c === "anio" ? (c.value ? Number(c.value) : "") : c.value;
+    if (!analisis.anio) analisis.mes = "";
+    propagar();
+  });
+}
+
+// --- Balance (árbol tipo -> cuenta -> extracto) --------------------------
+
+const TIPO_ORDEN = ["activo", "pasivo", "patrimonio", "ingreso", "gasto"];
+const TIPO_LABEL = {
+  activo: "Activos", pasivo: "Pasivos", patrimonio: "Patrimonio",
+  ingreso: "Ingresos", gasto: "Gastos",
+};
+
+const nn = (v) => (Number(v) < 0 ? " neg" : "");
 
 async function cargarBalance() {
-  const incluir = $("#incluir-interna").checked;
-  const filas = await api("GET", `/balance?incluir_interna=${incluir}`);
-  $("#balance-body").innerHTML = filas
-    .map(
-      (c) =>
-        `<tr><td>${c.cuenta_codigo}</td><td>${c.cuenta_nombre}</td><td>${c.tipo}</td>${celdaSaldo(
-          c.saldo
-        )}</tr>`
-    )
+  const filas = await api("GET", `/balance?${paramsAnalisis()}`);
+  const porTipo = {};
+  filas.forEach((c) => (porTipo[c.tipo] ||= []).push(c));
+
+  const html = TIPO_ORDEN.filter((t) => porTipo[t])
+    .map((t) => {
+      const cuentas = porTipo[t];
+      const subtotal = cuentas.reduce((s, c) => s + Number(c.saldo), 0);
+      const filasCuenta = cuentas
+        .map(
+          (c) => `
+        <div class="fila-cuenta" data-cod="${c.cuenta_codigo}">
+          <span><span class="cta-cod">${c.cuenta_codigo}</span>${c.cuenta_nombre}</span>
+          <span class="num${nn(c.saldo)}">${money(c.saldo)}</span>
+        </div>
+        <div class="extracto" data-ext="${c.cuenta_codigo}"></div>`
+        )
+        .join("");
+      return `<div class="grupo">
+        <div class="fila-tipo">
+          <span><span class="flecha">▶</span> ${TIPO_LABEL[t]}</span>
+          <span class="num${subtotal < 0 ? " neg" : ""}">${money(subtotal)}</span>
+        </div>
+        <div class="cuentas">${filasCuenta}</div>
+      </div>`;
+    })
     .join("");
+  $("#balance-arbol").innerHTML = html || '<p class="vacio">Sin datos para este filtro.</p>';
 }
-$("#incluir-interna").addEventListener("change", () =>
-  cargarBalance().catch((e) => mostrarError(e.message))
-);
+
+$("#balance-arbol").addEventListener("click", async (e) => {
+  const tipo = e.target.closest(".fila-tipo");
+  if (tipo) {
+    const abierto = tipo.parentElement.classList.toggle("abierto");
+    tipo.querySelector(".flecha").textContent = abierto ? "▼" : "▶";
+    return;
+  }
+  const cuenta = e.target.closest(".fila-cuenta");
+  if (!cuenta) return;
+  const cod = cuenta.dataset.cod;
+  const ext = cuenta.nextElementSibling;
+  if (!cuenta.classList.toggle("abierto") || ext.dataset.cargado) return;
+  ext.innerHTML = '<p class="vacio">cargando…</p>';
+  try {
+    const d = await api("GET", `/cuentas/${cod}/movimientos?${paramsAnalisis()}`);
+    ext.dataset.cargado = "1";
+    ext.innerHTML = d.movimientos.length
+      ? `<table><thead><tr>
+           <th>Fecha</th><th>Descripción</th><th class="num">Débito</th>
+           <th class="num">Crédito</th><th class="num">Saldo</th>
+         </tr></thead><tbody>${d.movimientos
+           .map(
+             (m) => `<tr>
+             <td>${m.fecha}</td><td>${m.descripcion}</td>
+             <td class="num">${Number(m.debito) ? money(m.debito) : ""}</td>
+             <td class="num">${Number(m.credito) ? money(m.credito) : ""}</td>
+             <td class="num${nn(m.saldo_acumulado)}">${money(m.saldo_acumulado)}</td>
+           </tr>`
+           )
+           .join("")}</tbody></table>`
+      : '<p class="vacio">Sin movimientos en este periodo.</p>';
+  } catch (err) {
+    ext.innerHTML = `<p class="vacio">${err.message}</p>`;
+  }
+});
 
 // --- Libro diario --------------------------------------------------------
 
 async function cargarLibro() {
-  const libro = $("#filtro-libro").value;
-  const asientos = await api("GET", `/asientos${libro ? `?libro=${libro}` : ""}`);
+  const asientos = await api("GET", `/asientos?${paramsAnalisis(true)}`);
   $("#libro-body").innerHTML = asientos.length
     ? asientos.map(renderAsiento).join("")
-    : '<p class="hint">Todavía no hay asientos.</p>';
+    : '<p class="hint">No hay asientos para este filtro.</p>';
 }
-$("#filtro-libro").addEventListener("change", () =>
-  cargarLibro().catch((e) => mostrarError(e.message))
-);
 
 function renderAsiento(a) {
   const lineas = a.lineas
@@ -319,7 +459,9 @@ function recalcularCuadre() {
 }
 
 $("#mov-libro").addEventListener("change", (e) => {
-  $("#mov-soporte").disabled = e.target.value === "interna";
+  const oficial = e.target.value === "oficial";
+  $("#mov-soporte").required = oficial;
+  $("#mov-soporte-req").hidden = !oficial;
 });
 
 $("#form-movimiento").addEventListener("submit", async (e) => {
@@ -360,5 +502,8 @@ const CARGADORES = {
   contratos: cargarContratos,
   movimiento: cargarMovimiento,
 };
+
+montarControles($("#ctrl-balance"), cargarBalance);
+montarControles($("#ctrl-libro"), cargarLibro);
 
 mostrarTab(location.hash.replace("#/", "") || TAB_INICIAL);

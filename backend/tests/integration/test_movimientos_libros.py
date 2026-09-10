@@ -35,9 +35,7 @@ async def test_post_movimiento_interno_no_afecta_balance_oficial(client, saldos)
         },
     )
     oficial = saldos((await client.get("/balance")).json())
-    total = saldos(
-        (await client.get("/balance", params={"incluir_interna": "true"})).json()
-    )
+    total = saldos((await client.get("/balance", params={"libro": "todos"})).json())
     assert oficial["1105"] == Decimal("0.00")
     assert total["1105"] == Decimal("-50000.00")
 

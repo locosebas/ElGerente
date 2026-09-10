@@ -4,7 +4,7 @@ _Última actualización: 2026-09-09_
 
 Resumen: el **Módulo 1 (motor contable)**, su **interfaz gráfica HTML** y el
 **endurecimiento** (resiliencia a fallos, logs, endpoint de salud, imagen Docker) están
-listos — arquitectura por features, base de datos asíncrona, **79 pruebas en verde**.
+listos — arquitectura por features, base de datos asíncrona, **85 pruebas en verde**.
 Listo para montar en local y probar con clientes de verdad. Falta el Módulo 2 (WhatsApp).
 
 ---
@@ -20,6 +20,7 @@ Listo para montar en local y probar con clientes de verdad. Falta el Módulo 2 (
 | 2c | Endurecimiento: congruencia, resiliencia a fallos, logs, `/salud`, Docker | ✅ hecho — 65 tests |
 | 2d | Mapa de navegación del código para mantenimiento barato (`docs/MAPA.md`, índice generado, `CLAUDE.md`) | ✅ hecho — 66 tests |
 | 2e | Enlaces a documentos (RUT del tercero, PDF de factura/contrato) — una URL por ahora, S3 después | ✅ hecho — 79 tests |
+| 2f | Análisis mejorado: árbol Activos/Pasivos/… → cuenta → extracto; filtro Oficial/Interno/Total; filtro por año/mes; campos obligatorios marcados | ✅ hecho — 85 tests |
 | 3 | Documentación del Módulo 2 (specs de las features de WhatsApp) | ⬜ pendiente |
 | 4 | Construir el Módulo 2 (webhook, conversaciones, asistente, flujos) | ⬜ pendiente |
 | 5 | Cierre (script de simulación, catálogo final, READMEs) | ⬜ pendiente |
@@ -66,7 +67,7 @@ Leyenda: ✅ hecho y verificado · 🟨 en progreso · ⬜ pendiente
 
 | # | Feature | Estado | Notas |
 |---|---|---|---|
-| 17 | `web-ui` (interfaz gráfica HTML) | ✅ | 6 pantallas (balance, libro diario, terceros, facturas, contratos, movimiento manual); servida en `/` |
+| 17 | `web-ui` (interfaz gráfica HTML) | ✅ | Registrar (movimientos, facturas, contratos, terceros) + Analizar (balance en árbol tipo→cuenta→extracto, libro diario), con filtro Oficial/Interno/Total y por año/mes; servida en `/` |
 
 ---
 
@@ -83,7 +84,7 @@ backend/
   app/
     core/                   config (.env), engine async, logging, errores de dominio
     contabilidad/           NÚCLEO: cuenta/asiento/linea_asiento, crear_asiento (partida doble),
-                            balance (consulta SQL), plan de cuentas, serializador, router
+                            balance (filtro libro + periodo), detalle_cuenta (extracto), plan de cuentas, router
     documentos/             enlace.py — valida el enlace al documento (RUT/PDF); punto de cambio para S3
     features/
       terceros/             clientes y proveedores
@@ -98,7 +99,7 @@ backend/
     seed.py                 siembra el plan de cuentas (NO crea tablas)
   scripts/reset_db.py       borra la BD, migra y siembra (desarrollo)
   tests/
-    unit/                   38 tests — reglas de negocio, servicios llamados directo
+    unit/                   44 tests — reglas de negocio, servicios llamados directo
     integration/            41 tests — app real vía httpx.AsyncClient + SQLite temporal
 
   scripts/seed_demo.py      carga un negocio inventado para ver la interfaz con datos
@@ -118,7 +119,7 @@ docs/
   aprendizaje/             partida-doble, que-es-una-api, async-await, deterministico-vs-ia
   features/
     README.md              índice de las 17 features con su estado
-    pruebas.md             catálogo de las 79 pruebas
+    pruebas.md             catálogo de las 85 pruebas
     <feature>/spec.md      una por feature (las 7 del Módulo 1 + web-ui)
 ```
 
@@ -126,7 +127,8 @@ docs/
 
 `POST/GET/PATCH /terceros` · `POST/GET/PATCH /facturas` · `GET /facturas/{id}` ·
 `POST /facturas/{id}/pagar` · `POST/GET/PATCH /contratos` · `POST /movimientos` ·
-`GET /cuentas` · `GET /asientos` (filtro `?libro=`) · `GET /balance` (`?incluir_interna=`)
+`GET /cuentas` · `GET /cuentas/{codigo}/movimientos` (extracto) ·
+`GET /asientos` (`?libro= &desde= &hasta=`) · `GET /balance` (`?libro=oficial|interna|todos &desde= &hasta=`)
 _(el `PATCH` de terceros/facturas/contratos solo actualiza el enlace al documento)_
 
 - `http://localhost:8000/` → interfaz gráfica HTML
@@ -137,8 +139,8 @@ _(el `PATCH` de terceros/facturas/contratos solo actualiza el enlace al document
 
 ## Pruebas
 
-- **79 pruebas, todas pasan.** `pytest` desde `backend/`.
-- 38 unitarias + 41 de integración.
+- **85 pruebas, todas pasan.** `pytest` desde `backend/`.
+- 44 unitarias + 41 de integración.
 - Cubren: reglas contables, generación de asientos, libros oficial/interno, la API de punta
   a punta, la interfaz gráfica, que modelos y migraciones no se separen, y la resiliencia
   (500 genérico ante fallos, `/salud`, errores de dominio y validación).
@@ -156,7 +158,7 @@ uv venv --python 3.12
 uv pip install -e ".[dev]"
 cp .env.example .env
 
-.venv/bin/python -m pytest -q            # -> 79 passed
+.venv/bin/python -m pytest -q            # -> 85 passed
 .venv/bin/ruff check .                   # -> All checks passed
 
 .venv/bin/python scripts/reset_db.py     # crea las tablas + siembra el plan de cuentas

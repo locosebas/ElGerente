@@ -47,23 +47,62 @@ No crea tablas.
 - El montaje va **después** de los routers de la API, así `/cuentas`, `/facturas`, etc.
   siguen respondiendo JSON.
 
+### Barra lateral (dos grupos)
+
+```
+REGISTRAR              ANALIZAR
+  Movimientos            Balance
+  Facturas               Libro diario
+  Contratos
+  Terceros
+```
+
+La interfaz abre en **Movimientos** (el uso principal).
+
+### Campos obligatorios vs. opcionales
+
+- Los campos obligatorios llevan un **`*`** rojo en la etiqueta y `required` en el input.
+- Los opcionales llevan **"(opcional)"** en la etiqueta.
+- Al pie de cada formulario: leyenda "`*` obligatorio".
+- Caso especial **Movimientos**: "documento de soporte" es obligatorio **solo si** el libro
+  es `oficial` — el `*` y el `required` aparecen/desaparecen al cambiar el libro.
+
+Obligatorios por pantalla:
+- **Movimientos**: fecha, descripción, libro, (soporte si oficial), y cada línea con cuenta
+  y monto. Opcional: —
+- **Facturas**: tipo, número, fecha, tercero, subtotal. Opcional: IVA (default 0), enlace al PDF.
+- **Contratos**: tercero, objeto, valor, fecha inicio. Opcional: fecha fin, enlace al PDF.
+- **Terceros**: nombre, NIT/cédula, tipo. Opcional: enlace al RUT.
+
 ### Pantallas y qué llaman
 
 | Pantalla | Llamadas a la API | Contenido |
 |---|---|---|
-| **Balance** | `GET /balance` (+ checkbox `incluir_interna`) | tabla: código, cuenta, tipo, saldo. Resalta saldos negativos. |
-| **Libro diario** | `GET /asientos` (+ filtro `libro`) | por asiento: fecha, descripción, origen, libro, soporte, y sus líneas débito/crédito con el total |
-| **Terceros** | `GET /terceros`, `POST /terceros` | tabla + formulario (nombre, NIT/cédula, tipo) |
-| **Facturas** | `GET /terceros`, `GET /facturas`, `POST /facturas`, `POST /facturas/{id}/pagar` | tabla (número, tipo, tercero, total, estado) con botón "pagar/cobrar" que abre un mini-formulario (medio de pago, fecha); formulario de alta (tipo, número, fecha, tercero, subtotal, IVA) |
-| **Contratos** | `GET /terceros`, `GET /contratos`, `POST /contratos` | tabla + formulario (tercero, objeto, valor, fecha inicio, fecha fin) |
-| **Movimiento manual** | `GET /cuentas`, `POST /movimientos` | formulario: fecha, descripción, libro (oficial/interna), soporte, y filas de líneas dinámicas (cuenta, débito, crédito) con "+ agregar línea"; muestra el descuadre en vivo |
+| **Movimientos** | `GET /cuentas`, `POST /movimientos` | formulario: fecha, descripción, libro (oficial/interno), soporte, y líneas dinámicas (cuenta, débito, crédito) con "+ agregar línea"; descuadre en vivo |
+| **Facturas** | `GET /terceros`, `GET /facturas`, `POST /facturas`, `POST /facturas/{id}/pagar` | formulario de alta + tabla (número, tipo, fecha, montos, estado, 📎) con botón "pagar/cobrar" |
+| **Contratos** | `GET /terceros`, `GET /contratos`, `POST /contratos` | formulario + tabla (tercero, objeto, valor, vigencia, estado, 📎) |
+| **Terceros** | `GET /terceros`, `POST /terceros` | formulario + tabla (nombre, NIT, tipo, 📎 RUT) |
+| **Balance** | `GET /balance`, `GET /cuentas/{codigo}/movimientos` | **árbol**: tipo (Activo/Pasivo/…) con subtotal → clic despliega las cuentas → clic en una cuenta despliega su extracto (fecha, descripción, débito, crédito, saldo acumulado). Controles arriba: **Libro** [Oficial · Interno · Total] y **Periodo** [Todo · año · mes]. |
+| **Libro diario** | `GET /asientos` (`libro`, `desde`, `hasta`) | lista de asientos con sus líneas. Mismos controles Libro + Periodo. |
+
+### Controles de análisis (Balance y Libro diario)
+
+- **Libro**: tres botones, `Oficial` (contabilidad real/externa, por defecto) · `Interno`
+  (para-contabilidad) · `Total`. Un texto corto explica cada uno.
+- **Periodo**: selector de **Año** (2024…año actual) y **Mes** (`Todos` = el año entero, o
+  enero…diciembre). De ahí se calculan `desde`/`hasta` para la API. Opción `Todo` ignora el
+  periodo.
+- Los dos controles se recuerdan al cambiar de pestaña dentro de "Analizar" (en memoria, no
+  en `localStorage` por ahora).
 
 ### Comportamiento general
 
 - Navegación por pestañas en una barra lateral; una sola página, sin recarga.
-- Los montos se muestran con separador de miles.
+- Los montos se muestran con separador de miles; los negativos en rojo.
 - Tras un alta exitosa, se limpia el formulario y se recarga la tabla.
 - Los errores de la API se muestran en un aviso arriba del formulario.
+- El árbol del Balance carga el nivel de cuentas de una; el extracto de cada cuenta se pide
+  a la API **al desplegarla** (lazy).
 
 ## 6. Errores
 
@@ -79,6 +118,10 @@ No crea tablas.
 | `test_home_sirve_html` | integración | `GET /` → 200 y `content-type` HTML | `tests/integration/test_web_ui.py` |
 | `test_estaticos_se_sirven` | integración | `GET /static/app.js` y `/static/styles.css` → 200 | `tests/integration/test_web_ui.py` |
 | `test_api_sigue_respondiendo_con_ui_montada` | integración | `GET /cuentas` → 200 JSON aunque el StaticFiles esté montado en `/` | `tests/integration/test_web_ui.py` |
+
+La lógica del árbol, los filtros y los campos obligatorios se prueban a nivel de API
+(`test_contabilidad.py`, `test_balance.py`) y de esquema (Pydantic marca los `required`);
+no hay tests de navegador en v1.
 
 ## 8. Notas / decisiones abiertas
 

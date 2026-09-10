@@ -94,7 +94,10 @@ graph TD
 | la regla de asiento de un **pago/cobro** | `app/features/pagos/service.py` | `pagar_factura` | `features/pagos/spec.md §3` |
 | los **medios de pago** válidos (hoy caja/bancos) | `app/contabilidad/codigos.py` | `MEDIOS_PAGO` | `features/pagos/spec.md §3` |
 | las validaciones de un **movimiento manual** | `app/features/movimientos/service.py` | `registrar_movimiento_manual` | `features/movimientos/spec.md §3` |
-| el cálculo del **balance** / el signo por naturaleza | `app/contabilidad/balance.py` | `calcular_balance` | `features/balance/spec.md §3` |
+| el cálculo del **balance** / el signo por naturaleza / el filtro libro (oficial\|interna\|todos) y periodo | `app/contabilidad/balance.py` | `calcular_balance`, `FiltroLibro`, `condiciones_asiento` | `features/balance/spec.md §3` |
+| el **extracto de una cuenta** (movimientos + saldo acumulado) | `app/contabilidad/detalle_cuenta.py` | `movimientos_de_cuenta` | `features/balance/spec.md §5` |
+| el **árbol de análisis** de la interfaz (tipo→cuenta→extracto) o el selector Oficial/Interno/Total / año-mes | `app/web/app.js` | `cargarBalance`, `montarControles`, `paramsAnalisis` | `features/web-ui/spec.md §5` |
+| qué campos de un formulario son **obligatorios** | `app/web/index.html` (marca `*`) + el `*Create` en `app/features/<f>/schemas.py` (Pydantic `required`) | — | `features/web-ui/spec.md §5` |
 | la validación central de **partida doble** | `app/contabilidad/asientos.py` | `crear_asiento`, `Asiento.cuadra` | `features/contabilidad-nucleo/spec.md §3` |
 | un **campo nuevo** en una tabla | `app/features/<f>/models.py` (o `app/contabilidad/models.py`) → luego `alembic revision --autogenerate` | — | el `spec.md §4` de esa feature |
 | el **enlace a un documento** (RUT, PDF de factura/contrato) o su validación | `app/documentos/enlace.py` + campos `enlace_rut` / `enlace_documento` en los modelos | `validar_enlace` | `features/documentos/spec.md` |

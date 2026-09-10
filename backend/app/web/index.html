@@ -28,31 +28,15 @@
 
       <!-- Balance -->
       <section id="tab-balance" class="tab" hidden>
-        <header class="tab-head">
-          <h2>Balance</h2>
-          <label class="check">
-            <input type="checkbox" id="incluir-interna"> incluir libro interno
-          </label>
-        </header>
-        <table class="grid">
-          <thead><tr><th>Código</th><th>Cuenta</th><th>Tipo</th><th class="num">Saldo</th></tr></thead>
-          <tbody id="balance-body"></tbody>
-        </table>
+        <h2>Balance</h2>
+        <div class="analisis-ctrl" id="ctrl-balance"></div>
+        <div id="balance-arbol" class="arbol"></div>
       </section>
 
       <!-- Libro diario -->
       <section id="tab-libro" class="tab" hidden>
-        <header class="tab-head">
-          <h2>Libro diario</h2>
-          <label class="check">
-            libro:
-            <select id="filtro-libro">
-              <option value="">todos</option>
-              <option value="oficial">oficial</option>
-              <option value="interna">interno</option>
-            </select>
-          </label>
-        </header>
+        <h2>Libro diario</h2>
+        <div class="analisis-ctrl" id="ctrl-libro"></div>
         <div id="libro-body" class="asientos"></div>
       </section>
 
@@ -61,9 +45,9 @@
         <h2>Terceros</h2>
         <form id="form-tercero" class="form">
           <div class="row">
-            <label>Nombre <input name="nombre" required></label>
-            <label>NIT / Cédula <input name="nit_cedula" required></label>
-            <label>Tipo
+            <label>Nombre <b class="req">*</b><input name="nombre" required></label>
+            <label>NIT / Cédula <b class="req">*</b><input name="nit_cedula" required></label>
+            <label>Tipo <b class="req">*</b>
               <select name="tipo">
                 <option value="cliente">cliente</option>
                 <option value="proveedor">proveedor</option>
@@ -71,11 +55,12 @@
             </label>
           </div>
           <div class="row">
-            <label class="ancho">Enlace al RUT (Drive)
+            <label class="ancho">Enlace al RUT (opcional)
               <input name="enlace_rut" type="url" placeholder="https://drive.google.com/...">
             </label>
             <button type="submit">Agregar</button>
           </div>
+          <p class="leyenda"><b class="req">*</b> obligatorio</p>
         </form>
         <table class="grid">
           <thead><tr><th>ID</th><th>Nombre</th><th>NIT / Cédula</th><th>Tipo</th><th>RUT</th></tr></thead>
@@ -88,24 +73,25 @@
         <h2>Facturas</h2>
         <form id="form-factura" class="form">
           <div class="row">
-            <label>Tipo
+            <label>Tipo <b class="req">*</b>
               <select name="tipo">
                 <option value="recibida">recibida (compra)</option>
                 <option value="emitida">emitida (venta)</option>
               </select>
             </label>
-            <label>Número <input name="numero" required></label>
-            <label>Fecha <input name="fecha" type="date" required></label>
-            <label>Tercero <select name="tercero_id" id="factura-tercero" required></select></label>
+            <label>Número <b class="req">*</b><input name="numero" required></label>
+            <label>Fecha <b class="req">*</b><input name="fecha" type="date" required></label>
+            <label>Tercero <b class="req">*</b><select name="tercero_id" id="factura-tercero" required></select></label>
           </div>
           <div class="row">
-            <label>Subtotal <input name="subtotal" type="number" step="0.01" min="0" required></label>
-            <label>IVA <input name="iva" type="number" step="0.01" min="0" value="0"></label>
-            <label class="ancho">Enlace al PDF (Drive)
+            <label>Subtotal <b class="req">*</b><input name="subtotal" type="number" step="0.01" min="0" required></label>
+            <label>IVA (opcional)<input name="iva" type="number" step="0.01" min="0" value="0"></label>
+            <label class="ancho">Enlace al PDF (opcional)
               <input name="enlace_documento" type="url" placeholder="https://drive.google.com/...">
             </label>
             <button type="submit">Registrar factura</button>
           </div>
+          <p class="leyenda"><b class="req">*</b> obligatorio</p>
         </form>
         <table class="grid">
           <thead><tr>
@@ -121,18 +107,19 @@
         <h2>Contratos</h2>
         <form id="form-contrato" class="form">
           <div class="row">
-            <label>Tercero <select name="tercero_id" id="contrato-tercero" required></select></label>
-            <label>Objeto <input name="objeto" required></label>
-            <label>Valor <input name="valor" type="number" step="0.01" min="0" required></label>
+            <label>Tercero <b class="req">*</b><select name="tercero_id" id="contrato-tercero" required></select></label>
+            <label>Objeto <b class="req">*</b><input name="objeto" required></label>
+            <label>Valor <b class="req">*</b><input name="valor" type="number" step="0.01" min="0" required></label>
           </div>
           <div class="row">
-            <label>Fecha inicio <input name="fecha_inicio" type="date" required></label>
-            <label>Fecha fin <input name="fecha_fin" type="date"></label>
-            <label class="ancho">Enlace al PDF (Drive)
+            <label>Fecha inicio <b class="req">*</b><input name="fecha_inicio" type="date" required></label>
+            <label>Fecha fin (opcional)<input name="fecha_fin" type="date"></label>
+            <label class="ancho">Enlace al PDF (opcional)
               <input name="enlace_documento" type="url" placeholder="https://drive.google.com/...">
             </label>
             <button type="submit">Registrar contrato</button>
           </div>
+          <p class="leyenda"><b class="req">*</b> obligatorio</p>
         </form>
         <table class="grid">
           <thead><tr><th>ID</th><th>Tercero</th><th>Objeto</th><th class="num">Valor</th><th>Vigencia</th><th>Estado</th><th>PDF</th></tr></thead>
@@ -148,19 +135,21 @@
           débitos tiene que igualar la de créditos.</p>
         <form id="form-movimiento" class="form">
           <div class="row">
-            <label>Fecha <input name="fecha" type="date" required></label>
-            <label>Libro
+            <label>Fecha <b class="req">*</b><input name="fecha" type="date" required></label>
+            <label>Libro <b class="req">*</b>
               <select name="libro" id="mov-libro">
                 <option value="oficial">oficial (exige soporte)</option>
                 <option value="interna">interno (para-contabilidad)</option>
               </select>
             </label>
-            <label>Documento de soporte <input name="documento_soporte" id="mov-soporte"></label>
+            <label>Documento de soporte <b class="req" id="mov-soporte-req">*</b>
+              <input name="documento_soporte" id="mov-soporte" required>
+            </label>
           </div>
-          <label>Descripción <input name="descripcion" required></label>
+          <label>Descripción <b class="req">*</b><input name="descripcion" required></label>
 
           <table class="grid lineas">
-            <thead><tr><th>Cuenta</th><th class="num">Débito</th><th class="num">Crédito</th><th></th></tr></thead>
+            <thead><tr><th>Cuenta <b class="req">*</b></th><th class="num">Débito</th><th class="num">Crédito</th><th></th></tr></thead>
             <tbody id="lineas-body"></tbody>
             <tfoot><tr>
               <td>Totales</td>
@@ -173,6 +162,7 @@
             <button type="button" id="add-linea">+ agregar línea</button>
             <button type="submit">Registrar movimiento</button>
           </div>
+          <p class="leyenda"><b class="req">*</b> obligatorio · cada línea necesita cuenta y un monto</p>
         </form>
       </section>
     </main>

@@ -76,7 +76,7 @@ async def test_get_asientos_filtra_por_libro(client):
     assert oficiales == []
 
 
-async def test_get_balance_vs_incluir_interna(client, saldos):
+async def test_get_balance_libro_y_periodo(client, saldos):
     await client.post(
         "/movimientos",
         json={
@@ -90,12 +90,53 @@ async def test_get_balance_vs_incluir_interna(client, saldos):
         },
     )
     oficial = saldos((await client.get("/balance")).json())
-    total = saldos(
-        (await client.get("/balance", params={"incluir_interna": "true"})).json()
-    )
+    interno = saldos((await client.get("/balance", params={"libro": "interna"})).json())
+    total = saldos((await client.get("/balance", params={"libro": "todos"})).json())
     assert oficial["1105"] == Decimal("0.00")
+    assert interno["1105"] == Decimal("-50000.00")
     assert total["1105"] == Decimal("-50000.00")
-    assert total["2905"] == Decimal("-50000.00")
+
+    # el movimiento es de septiembre: un periodo de agosto lo deja fuera
+    agosto = saldos(
+        (
+            await client.get(
+                "/balance",
+                params={"libro": "todos", "desde": "2026-08-01", "hasta": "2026-08-31"},
+            )
+        ).json()
+    )
+    assert agosto["1105"] == Decimal("0.00")
+
+    r = await client.get("/balance", params={"desde": "2026-09-30", "hasta": "2026-09-01"})
+    assert r.status_code == 422
+
+
+async def test_get_cuenta_movimientos_end_to_end(client):
+    prov = await _proveedor(client)
+    for numero, sub in [("F1", "100000"), ("F2", "200000")]:
+        await client.post(
+            "/facturas",
+            json={
+                "tipo": "recibida",
+                "numero": numero,
+                "fecha": "2026-09-01",
+                "tercero_id": prov,
+                "subtotal": sub,
+                "iva": "0",
+            },
+        )
+    r = await client.get("/cuentas/2205/movimientos")
+    assert r.status_code == 200
+    d = r.json()
+    assert d["cuenta_codigo"] == "2205"
+    assert [m["credito"] for m in d["movimientos"]] == ["100000.00", "200000.00"]
+    assert [m["saldo_acumulado"] for m in d["movimientos"]] == ["100000.00", "300000.00"]
+    assert d["saldo_final"] == "300000.00"
+
+
+async def test_get_cuenta_movimientos_404(client):
+    r = await client.get("/cuentas/9999/movimientos")
+    assert r.status_code == 404
 
 
 async def test_invariante_todos_los_asientos_cuadran(client):

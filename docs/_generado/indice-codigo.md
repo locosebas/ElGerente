@@ -21,14 +21,23 @@ _`crear_asiento` — el único punto de escritura contable._
   depende de: `app.contabilidad.models`, `app.core.errors`, `app.core.logging`
 
 ## `backend/app/contabilidad/balance.py`
-_Cálculo del balance: saldo acumulado por cuenta._
+_Cálculo del balance: saldo de cada cuenta, con filtro de libro y de periodo._
 
+  - `class FiltroLibro` — 
+  - `def condiciones_asiento(libro, desde, hasta)` — Filtros a aplicar sobre `asiento` (libro + rango de fechas).
   - `async def calcular_balance(session)` — Devuelve TODAS las cuentas del plan (incluso con saldo 0), ordenadas
 
-  depende de: `app.contabilidad.models`
+  depende de: `app.contabilidad.models`, `app.core.errors`
 
 ## `backend/app/contabilidad/codigos.py`
 _Códigos de cuenta usados por las reglas automáticas de asientos._
+
+## `backend/app/contabilidad/detalle_cuenta.py`
+_Extracto de una cuenta: sus movimientos con saldo acumulado._
+
+  - `async def movimientos_de_cuenta(session, codigo)` — 
+
+  depende de: `app.contabilidad.balance`, `app.contabilidad.models`, `app.core.errors`
 
 ## `backend/app/contabilidad/models.py`
 _Modelos del núcleo contable — partida doble._
@@ -51,13 +60,14 @@ _Plan de cuentas inicial y su siembra idempotente._
   depende de: `app.contabilidad.models`
 
 ## `backend/app/contabilidad/router.py`
-_Endpoints de solo lectura del núcleo contable: /cuentas, /asientos, /balance._
+_Endpoints de solo lectura del núcleo contable._
 
   - `async def listar_cuentas(db)` — 
-  - `async def listar_asientos(libro, db)` — 
-  - `async def obtener_balance(incluir_interna, db)` — 
+  - `async def listar_asientos(libro, desde, hasta, db)` — 
+  - `async def obtener_balance(libro, desde, hasta, db)` — 
+  - `async def detalle_de_cuenta(codigo, libro, desde, hasta, db)` — 
 
-  depende de: `app.contabilidad.balance`, `app.contabilidad.models`, `app.contabilidad.schemas`, `app.contabilidad.serializers`, `app.core.db`
+  depende de: `app.contabilidad.balance`, `app.contabilidad.detalle_cuenta`, `app.contabilidad.models`, `app.contabilidad.schemas`, `app.contabilidad.serializers`, `app.core.db`
 
 ## `backend/app/contabilidad/schemas.py`
 _Esquemas de entrada/salida del núcleo contable (Pydantic)._
@@ -66,6 +76,8 @@ _Esquemas de entrada/salida del núcleo contable (Pydantic)._
   - `class LineaAsientoOut` — 
   - `class AsientoOut` — 
   - `class SaldoCuenta` — 
+  - `class MovimientoCuentaOut` — 
+  - `class DetalleCuentaOut` — 
 
   depende de: `app.contabilidad.models`
 

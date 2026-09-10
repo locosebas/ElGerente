@@ -9,7 +9,7 @@ pytest --collect-only -q
 
 Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 
-**Estado actual: 79 pruebas, todas en verde** (`pytest` → 79 passed). Módulo 1 + interfaz gráfica + endurecimiento (resiliencia, logs, salud) + mapa de código + enlaces a documentos.
+**Estado actual: 85 pruebas, todas en verde** (`pytest` → 85 passed). Módulo 1 + interfaz gráfica (árbol de análisis, filtro libro/periodo, campos obligatorios) + endurecimiento + mapa de código + enlaces a documentos.
 
 ---
 
@@ -28,17 +28,23 @@ Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 | `test_seed_es_idempotente` | unit | sembrar dos veces no duplica cuentas | ✅ |
 | `test_get_cuentas_devuelve_plan_completo` | integración | `GET /cuentas` → 10 cuentas, en orden de código | ✅ |
 | `test_get_asientos_filtra_por_libro` | integración | `?libro=interna` / `?libro=oficial` | ✅ |
-| `test_get_balance_vs_incluir_interna` | integración | los dos balances difieren en el monto interno | ✅ |
+| `test_get_balance_libro_y_periodo` | integración | `?libro=oficial\|interna\|todos` y `?desde=&hasta=` filtran bien; `desde>hasta` → 422 | ✅ |
 | `test_get_balance_refleja_factura_y_pago` | integración | balance tras registrar y pagar una factura recibida | ✅ |
+| `test_get_cuenta_movimientos_end_to_end` | integración | `GET /cuentas/2205/movimientos` → extracto con saldo acumulado correcto | ✅ |
+| `test_get_cuenta_movimientos_404` | integración | código inexistente → 404 | ✅ |
 | `test_invariante_todos_los_asientos_cuadran` | integración | cada asiento de `GET /asientos` cuadra línea a línea | ✅ |
 
-### balance — `tests/unit/contabilidad/test_balance.py`
+### balance — `tests/unit/contabilidad/test_balance.py` + `test_detalle_cuenta.py`
 
 | id | tipo | verifica | estado |
 |---|---|---|---|
 | `test_balance_signo_por_naturaleza` | unit | activo con más débito → +; patrimonio con más crédito → + | ✅ |
 | `test_balance_incluye_cuentas_sin_movimiento` | unit | las 10 cuentas aparecen, las sin líneas con saldo 0 | ✅ |
-| `test_balance_ignora_interna_por_defecto` | unit | interno fuera por defecto, dentro con `incluir_interna=True` | ✅ |
+| `test_balance_libro_oficial_interna_todos` | unit | los tres modos dan saldos distintos según el asiento | ✅ |
+| `test_balance_filtra_por_periodo` | unit | `desde`/`hasta` deja fuera asientos de otras fechas | ✅ |
+| `test_balance_desde_mayor_que_hasta` | unit | `DatosInvalidos` | ✅ |
+| `test_movimientos_de_cuenta_saldo_acumulado` | unit | el saldo acumulado avanza movimiento a movimiento | ✅ |
+| `test_movimientos_de_cuenta_codigo_inexistente` | unit | `NoEncontrado` | ✅ |
 
 ### terceros — `tests/unit/terceros/` + `tests/integration/test_terceros.py`
 
