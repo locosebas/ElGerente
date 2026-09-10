@@ -40,6 +40,7 @@ factura o un contrato siempre apunta a un tercero.
 | `nombre` | str(150) | obligatorio |
 | `nit_cedula` | str(20) | obligatorio |
 | `tipo` | enum `TipoTercero` | `cliente` \| `proveedor` |
+| `enlace_rut` | str(500), nullable | URL al RUT — ver [`documentos/spec.md`](../documentos/spec.md) |
 
 ## 5. Interfaz
 

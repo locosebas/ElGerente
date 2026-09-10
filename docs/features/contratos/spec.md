@@ -21,7 +21,8 @@ automáticos.
 - Cronograma de pagos / cuotas.
 - Alertas de vencimiento.
 - Cambiar el estado (`vigente`/`terminado`) por API — nace `vigente`.
-- Adjuntar el archivo del contrato (campo `archivo_original` reservado para el Módulo 3).
+- Subir el archivo del contrato (hoy solo un **enlace** — ver
+  [`documentos/spec.md`](../documentos/spec.md)).
 
 ## 3. Reglas de negocio
 
@@ -45,7 +46,7 @@ automáticos.
 | `fecha_inicio` | date | |
 | `fecha_fin` | date, nullable | ≥ `fecha_inicio` si se da |
 | `estado` | enum `EstadoContrato` | `vigente` \| `terminado`; nace `vigente` |
-| `archivo_original` | str(255), nullable | lo usará el Módulo 3 |
+| `enlace_documento` | str(500), nullable | URL al PDF del contrato — ver [`documentos/spec.md`](../documentos/spec.md) |
 
 ## 5. Interfaz
 

@@ -6,7 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.features.facturas import service
 from app.features.facturas.models import EstadoFactura, Factura, TipoFactura
-from app.features.facturas.schemas import FacturaCreate, FacturaOut, PagarFacturaRequest
+from app.features.facturas.schemas import (
+    FacturaCreate,
+    FacturaEnlace,
+    FacturaOut,
+    PagarFacturaRequest,
+)
 from app.features.pagos import service as pagos_service
 
 router = APIRouter(prefix="/facturas", tags=["facturas"])
@@ -29,6 +34,13 @@ async def listar_facturas(
 @router.get("/{factura_id}", response_model=FacturaOut)
 async def obtener_factura(factura_id: int, db: AsyncSession = Depends(get_db)) -> Factura:
     return await service.obtener_factura(db, factura_id)
+
+
+@router.patch("/{factura_id}", response_model=FacturaOut)
+async def actualizar_enlace_documento(
+    factura_id: int, data: FacturaEnlace, db: AsyncSession = Depends(get_db)
+) -> Factura:
+    return await service.actualizar_enlace_documento(db, factura_id, data.enlace_documento)
 
 
 @router.post("/{factura_id}/pagar", response_model=FacturaOut)

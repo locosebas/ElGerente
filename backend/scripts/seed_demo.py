@@ -49,12 +49,16 @@ async def poblar() -> None:  # noqa: PLR0915 — es un guion lineal, se lee de a
             )
             return
 
+        DRIVE = "https://drive.google.com/file/d/DEMO"
+
         print("Creando terceros...")
         prov_arriendo = await crear_tercero(
-            s, nombre="Inmobiliaria El Roble", nit_cedula="830111222", tipo=TipoTercero.PROVEEDOR
+            s, nombre="Inmobiliaria El Roble", nit_cedula="830111222", tipo=TipoTercero.PROVEEDOR,
+            enlace_rut=f"{DRIVE}-rut-elroble/view",
         )
         prov_mayorista = await crear_tercero(
-            s, nombre="Distribuciones del Valle SAS", nit_cedula="900456789", tipo=TipoTercero.PROVEEDOR
+            s, nombre="Distribuciones del Valle SAS", nit_cedula="900456789", tipo=TipoTercero.PROVEEDOR,
+            enlace_rut=f"{DRIVE}-rut-delvalle/view",
         )
         prov_servicios = await crear_tercero(
             s, nombre="Energía y Aseo S.A.", nit_cedula="890333444", tipo=TipoTercero.PROVEEDOR
@@ -97,7 +101,7 @@ async def poblar() -> None:  # noqa: PLR0915 — es un guion lineal, se lee de a
             ("ARR-2608", prov_arriendo, date(2026, 8, 3), "2500000", "0", False, None),
             ("EA-10233", prov_servicios, date(2026, 8, 19), "510000", "96900", False, None),
         ]
-        for numero, tercero, fecha, subtotal, iva, pagada, medio in compras:
+        for i, (numero, tercero, fecha, subtotal, iva, pagada, medio) in enumerate(compras):
             f = await registrar_factura(
                 s,
                 tipo=TipoFactura.RECIBIDA,
@@ -106,6 +110,7 @@ async def poblar() -> None:  # noqa: PLR0915 — es un guion lineal, se lee de a
                 tercero_id=tercero.id,
                 subtotal=D(subtotal),
                 iva=D(iva),
+                enlace_documento=f"{DRIVE}-{numero}/view" if i % 2 == 0 else None,
             )
             if pagada:
                 await pagar_factura(s, factura_id=f.id, medio_pago=medio, fecha=fecha)
@@ -173,6 +178,7 @@ async def poblar() -> None:  # noqa: PLR0915 — es un guion lineal, se lee de a
             valor=D("30000000"),
             fecha_inicio=date(2026, 6, 1),
             fecha_fin=date(2027, 5, 31),
+            enlace_documento=f"{DRIVE}-contrato-arriendo/view",
         )
         await registrar_contrato(
             s,

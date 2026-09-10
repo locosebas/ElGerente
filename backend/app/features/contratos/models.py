@@ -28,4 +28,6 @@ class Contrato(Base):
     estado: Mapped[EstadoContrato] = mapped_column(
         Enum(EstadoContrato), default=EstadoContrato.VIGENTE
     )
-    archivo_original: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Enlace al PDF del contrato firmado (URL, típicamente de Drive).
+    # Ver docs/features/documentos/spec.md.
+    enlace_documento: Mapped[str | None] = mapped_column(String(500), nullable=True)

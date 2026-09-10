@@ -23,8 +23,8 @@ El cobro/pago posterior es otra feature: [`pagos`](../pagos/spec.md).
 - Líneas de detalle (ítems/productos) de la factura — solo subtotal e IVA globales.
 - Retenciones (retefuente, reteica).
 - Notas crédito / anulación.
-- Adjuntar el archivo PDF/imagen (el campo `archivo_original` existe pero lo llena el
-  Módulo 3).
+- Subir el archivo PDF (hoy solo se guarda un **enlace** — ver
+  [`documentos/spec.md`](../documentos/spec.md)).
 - Numeración automática: el `numero` lo provee quien registra.
 
 ## 3. Reglas de negocio
@@ -75,7 +75,7 @@ El cobro/pago posterior es otra feature: [`pagos`](../pagos/spec.md).
 | `total` | Numeric(14,2) | calculado por el servidor |
 | `estado` | enum `EstadoFactura` | `pendiente` \| `pagada` \| `anulada`; nace `pendiente` |
 | `asiento_id` | FK → `asiento.id`, nullable | se llena al contabilizar |
-| `archivo_original` | str(255), nullable | lo usará el Módulo 3 |
+| `enlace_documento` | str(500), nullable | URL al PDF de la factura — ver [`documentos/spec.md`](../documentos/spec.md) |
 
 ## 5. Interfaz
 

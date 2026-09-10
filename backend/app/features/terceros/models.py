@@ -21,3 +21,5 @@ class Tercero(Base):
     nombre: Mapped[str] = mapped_column(String(150))
     nit_cedula: Mapped[str] = mapped_column(String(20))
     tipo: Mapped[TipoTercero] = mapped_column(Enum(TipoTercero))
+    # Enlace al RUT (URL, típicamente de Drive). Ver docs/features/documentos/spec.md.
+    enlace_rut: Mapped[str | None] = mapped_column(String(500), nullable=True)

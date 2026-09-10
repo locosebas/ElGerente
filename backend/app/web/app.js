@@ -44,6 +44,12 @@ function celdaSaldo(v) {
   return `<td${cls}>${money(v)}</td>`;
 }
 
+function celdaDoc(url) {
+  if (!url) return "<td>—</td>";
+  const seguro = String(url).replace(/"/g, "%22");
+  return `<td><a class="doc" href="${seguro}" target="_blank" rel="noopener" title="${seguro}">📎</a></td>`;
+}
+
 // --- Navegación por pestañas ----------------------------------------------
 
 const TABS = ["movimiento", "facturas", "contratos", "terceros", "balance", "libro"];
@@ -122,7 +128,9 @@ async function cargarTerceros() {
   $("#terceros-body").innerHTML = ts
     .map(
       (t) =>
-        `<tr><td>${t.id}</td><td>${t.nombre}</td><td>${t.nit_cedula}</td><td>${t.tipo}</td></tr>`
+        `<tr><td>${t.id}</td><td>${t.nombre}</td><td>${t.nit_cedula}</td><td>${t.tipo}</td>${celdaDoc(
+          t.enlace_rut
+        )}</tr>`
     )
     .join("");
 }
@@ -136,6 +144,7 @@ $("#form-tercero").addEventListener("submit", async (e) => {
       nombre: f.nombre.value,
       nit_cedula: f.nit_cedula.value,
       tipo: f.tipo.value,
+      enlace_rut: f.enlace_rut.value || null,
     });
     f.reset();
     await cargarTerceros();
@@ -169,6 +178,7 @@ async function cargarFacturas() {
         <td class="num">${money(f.subtotal)}</td><td class="num">${money(f.iva)}</td>
         <td class="num">${money(f.total)}</td>
         <td><span class="badge ${f.estado}">${f.estado}</span></td>
+        ${celdaDoc(f.enlace_documento)}
         <td>${accion}</td>
       </tr>`;
     })
@@ -205,6 +215,7 @@ $("#form-factura").addEventListener("submit", async (e) => {
       tercero_id: Number(f.tercero_id.value),
       subtotal: f.subtotal.value,
       iva: f.iva.value || "0",
+      enlace_documento: f.enlace_documento.value || null,
     });
     f.reset();
     f.iva.value = "0";
@@ -225,7 +236,7 @@ async function cargarContratos() {
         `<tr><td>${c.id}</td><td>${c.tercero_id}</td><td>${c.objeto}</td>
          <td class="num">${money(c.valor)}</td>
          <td>${c.fecha_inicio}${c.fecha_fin ? " → " + c.fecha_fin : ""}</td>
-         <td>${c.estado}</td></tr>`
+         <td>${c.estado}</td>${celdaDoc(c.enlace_documento)}</tr>`
     )
     .join("");
 }
@@ -241,6 +252,7 @@ $("#form-contrato").addEventListener("submit", async (e) => {
       valor: f.valor.value,
       fecha_inicio: f.fecha_inicio.value,
       fecha_fin: f.fecha_fin.value || null,
+      enlace_documento: f.enlace_documento.value || null,
     });
     f.reset();
     await cargarContratos();

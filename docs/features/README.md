@@ -21,6 +21,7 @@ Leyenda: ⬜ pendiente · 🟨 en progreso · ✅ hecho y verificado
 | 5 | `pagos` | ✅ | [spec](pagos/spec.md) | `app/features/pagos/` | `pytest tests/unit/pagos tests/integration/test_facturas.py` |
 | 6 | `contratos` | ✅ | [spec](contratos/spec.md) | `app/features/contratos/` | `pytest tests/unit/contratos tests/integration/test_contratos.py` |
 | 7 | `movimientos` | ✅ | [spec](movimientos/spec.md) | `app/features/movimientos/` | `pytest tests/unit/movimientos tests/integration/test_movimientos_libros.py` |
+| 7b | `documentos` (enlace a PDF/RUT por tercero, factura y contrato) | ✅ | [spec](documentos/spec.md) | `app/documentos/` + campos en terceros/facturas/contratos | `pytest tests/unit/documentos tests/integration/test_documentos.py` |
 
 ### Módulo 2 — WhatsApp
 

@@ -106,6 +106,16 @@ _Configuración de logging._
   - `def configurar_logging(nivel)` — Configura el logging raíz una sola vez. Idempotente.
   - `def log(area)` — Devuelve el logger `elgerente.<area>`.
 
+## `backend/app/documentos/__init__.py`
+_Enlaces a documentos de respaldo (RUT, PDF de factura/contrato)._
+
+## `backend/app/documentos/enlace.py`
+_Validación de un enlace a documento._
+
+  - `def validar_enlace(valor)` — Normaliza y valida un enlace opcional.
+
+  depende de: `app.core.errors`
+
 ## `backend/app/features/contratos/models.py`
 _Modelo de `contrato` — registro informativo. Ver docs/features/contratos/spec.md._
 
@@ -118,12 +128,14 @@ _Modelo de `contrato` — registro informativo. Ver docs/features/contratos/spec
 
   - `async def crear_contrato(data, db)` — 
   - `async def listar_contratos(db)` — 
+  - `async def actualizar_enlace_documento(contrato_id, data, db)` — 
 
   depende de: `app.core.db`, `app.features.contratos`, `app.features.contratos.models`, `app.features.contratos.schemas`
 
 ## `backend/app/features/contratos/schemas.py`
 
   - `class ContratoCreate` — 
+  - `class ContratoEnlace` — Cuerpo del PATCH: solo el enlace al PDF (puede ser null para quitarlo).
   - `class ContratoOut` — 
 
   depende de: `app.features.contratos.models`
@@ -132,9 +144,11 @@ _Modelo de `contrato` — registro informativo. Ver docs/features/contratos/spec
 _Lógica de contratos (registro informativo, sin contabilidad)._
 
   - `async def registrar_contrato(session)` — 
+  - `async def obtener_contrato(session, contrato_id)` — 
+  - `async def actualizar_enlace_documento(session, contrato_id, enlace_documento)` — 
   - `async def listar_contratos(session)` — 
 
-  depende de: `app.core.errors`, `app.core.logging`, `app.features.contratos.models`, `app.features.terceros.service`
+  depende de: `app.core.errors`, `app.core.logging`, `app.documentos.enlace`, `app.features.contratos.models`, `app.features.terceros.service`
 
 ## `backend/app/features/facturas/models.py`
 _Modelo de `factura`. Ver docs/features/facturas/spec.md §4._
@@ -150,6 +164,7 @@ _Modelo de `factura`. Ver docs/features/facturas/spec.md §4._
   - `async def crear_factura(data, db)` — 
   - `async def listar_facturas(tipo, estado, db)` — 
   - `async def obtener_factura(factura_id, db)` — 
+  - `async def actualizar_enlace_documento(factura_id, data, db)` — 
   - `async def pagar_factura(factura_id, data, db)` — 
 
   depende de: `app.core.db`, `app.features.facturas`, `app.features.facturas.models`, `app.features.facturas.schemas`, `app.features.pagos`
@@ -157,6 +172,7 @@ _Modelo de `factura`. Ver docs/features/facturas/spec.md §4._
 ## `backend/app/features/facturas/schemas.py`
 
   - `class FacturaCreate` — 
+  - `class FacturaEnlace` — Cuerpo del PATCH: solo el enlace al PDF (puede ser null para quitarlo).
   - `class FacturaOut` — 
   - `class PagarFacturaRequest` — 
 
@@ -167,9 +183,10 @@ _Lógica de facturas: registrar factura emitida/recibida generando el_
 
   - `async def registrar_factura(session)` — 
   - `async def obtener_factura(session, factura_id)` — 
+  - `async def actualizar_enlace_documento(session, factura_id, enlace_documento)` — 
   - `async def listar_facturas(session)` — 
 
-  depende de: `app.contabilidad`, `app.contabilidad.asientos`, `app.contabilidad.models`, `app.core.errors`, `app.core.logging`, `app.features.facturas.models`, `app.features.terceros.service`
+  depende de: `app.contabilidad`, `app.contabilidad.asientos`, `app.contabilidad.models`, `app.core.errors`, `app.core.logging`, `app.documentos.enlace`, `app.features.facturas.models`, `app.features.terceros.service`
 
 ## `backend/app/features/movimientos/router.py`
 
@@ -210,12 +227,14 @@ _Modelo de `tercero` — clientes y proveedores. Ver docs/features/terceros/spec
 
   - `async def crear_tercero(data, db)` — 
   - `async def listar_terceros(tipo, db)` — 
+  - `async def actualizar_enlace_rut(tercero_id, data, db)` — 
 
   depende de: `app.core.db`, `app.features.terceros`, `app.features.terceros.models`, `app.features.terceros.schemas`
 
 ## `backend/app/features/terceros/schemas.py`
 
   - `class TerceroCreate` — 
+  - `class TerceroEnlace` — Cuerpo del PATCH: solo el enlace al RUT (puede ser null para quitarlo).
   - `class TerceroOut` — 
 
   depende de: `app.features.terceros.models`
@@ -224,10 +243,11 @@ _Modelo de `tercero` — clientes y proveedores. Ver docs/features/terceros/spec
 _Lógica de terceros. Ver docs/features/terceros/spec.md._
 
   - `async def crear_tercero(session)` — 
+  - `async def actualizar_enlace_rut(session, tercero_id, enlace_rut)` — 
   - `async def listar_terceros(session)` — 
   - `async def obtener_tercero(session, tercero_id)` — 
 
-  depende de: `app.core.errors`, `app.core.logging`, `app.features.terceros.models`
+  depende de: `app.core.errors`, `app.core.logging`, `app.documentos.enlace`, `app.features.terceros.models`
 
 ## `backend/app/main.py`
 _Ensamblado de la aplicación FastAPI._

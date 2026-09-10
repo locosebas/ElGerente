@@ -97,6 +97,8 @@ graph TD
 | el cálculo del **balance** / el signo por naturaleza | `app/contabilidad/balance.py` | `calcular_balance` | `features/balance/spec.md §3` |
 | la validación central de **partida doble** | `app/contabilidad/asientos.py` | `crear_asiento`, `Asiento.cuadra` | `features/contabilidad-nucleo/spec.md §3` |
 | un **campo nuevo** en una tabla | `app/features/<f>/models.py` (o `app/contabilidad/models.py`) → luego `alembic revision --autogenerate` | — | el `spec.md §4` de esa feature |
+| el **enlace a un documento** (RUT, PDF de factura/contrato) o su validación | `app/documentos/enlace.py` + campos `enlace_rut` / `enlace_documento` en los modelos | `validar_enlace` | `features/documentos/spec.md` |
+| pasar los documentos a **S3 / almacenamiento real** | `app/documentos/` (agregar `almacenamiento.py` con adaptador) | — | `features/documentos/spec.md §8` |
 | un **endpoint** (ruta, filtros, forma de la respuesta) | `app/features/<f>/router.py` + `.../schemas.py` | el handler | el `spec.md §5` de esa feature |
 | el **manejo de errores** global / el shape del 500 | `app/main.py` | los `@app.exception_handler` | `arquitectura/resiliencia-y-logs.md` |
 | qué se **loguea** y cómo | `app/core/logging.py` + `_log.info(...)` en cada service | `configurar_logging` | `arquitectura/resiliencia-y-logs.md` |
@@ -113,6 +115,7 @@ graph TD
 | Configuración / `.env` | `backend/app/core/config.py` |
 | Motor y sesión de BD, `get_db`, chequeo de conexión | `backend/app/core/db.py` |
 | Errores de dominio (`NoEncontrado`, `Conflicto`, `DatosInvalidos`) | `backend/app/core/errors.py` |
+| Enlaces a documentos (validación, futuro S3) | `backend/app/documentos/enlace.py` |
 | Logging (formato, niveles, `log("area")`) | `backend/app/core/logging.py` |
 | Ensamblado de la app, middleware, manejadores de error, `/salud` | `backend/app/main.py` |
 | Agregador de modelos (para Alembic y tests) | `backend/app/models.py` |

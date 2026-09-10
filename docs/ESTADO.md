@@ -4,7 +4,7 @@ _Última actualización: 2026-09-09_
 
 Resumen: el **Módulo 1 (motor contable)**, su **interfaz gráfica HTML** y el
 **endurecimiento** (resiliencia a fallos, logs, endpoint de salud, imagen Docker) están
-listos — arquitectura por features, base de datos asíncrona, **66 pruebas en verde**.
+listos — arquitectura por features, base de datos asíncrona, **79 pruebas en verde**.
 Listo para montar en local y probar con clientes de verdad. Falta el Módulo 2 (WhatsApp).
 
 ---
@@ -19,6 +19,7 @@ Listo para montar en local y probar con clientes de verdad. Falta el Módulo 2 (
 | 2b | Interfaz gráfica HTML del Módulo 1 | ✅ hecho — 59 tests |
 | 2c | Endurecimiento: congruencia, resiliencia a fallos, logs, `/salud`, Docker | ✅ hecho — 65 tests |
 | 2d | Mapa de navegación del código para mantenimiento barato (`docs/MAPA.md`, índice generado, `CLAUDE.md`) | ✅ hecho — 66 tests |
+| 2e | Enlaces a documentos (RUT del tercero, PDF de factura/contrato) — una URL por ahora, S3 después | ✅ hecho — 79 tests |
 | 3 | Documentación del Módulo 2 (specs de las features de WhatsApp) | ⬜ pendiente |
 | 4 | Construir el Módulo 2 (webhook, conversaciones, asistente, flujos) | ⬜ pendiente |
 | 5 | Cierre (script de simulación, catálogo final, READMEs) | ⬜ pendiente |
@@ -45,6 +46,7 @@ Leyenda: ✅ hecho y verificado · 🟨 en progreso · ⬜ pendiente
 | 5 | `pagos` | ✅ | `backend/app/features/pagos/` | [spec](features/pagos/spec.md) |
 | 6 | `contratos` | ✅ | `backend/app/features/contratos/` | [spec](features/contratos/spec.md) |
 | 7 | `movimientos` | ✅ | `backend/app/features/movimientos/` | [spec](features/movimientos/spec.md) |
+| 7b | `documentos` (enlace a PDF/RUT) | ✅ | `backend/app/documentos/` + campos en terceros/facturas/contratos | [spec](features/documentos/spec.md) |
 
 ### Módulo 2 — WhatsApp (chatbot 100 % determinístico)
 
@@ -77,11 +79,12 @@ backend/
   Dockerfile                imagen del backend (multi-etapa, usuario sin privilegios)
   docker-entrypoint.sh      arranque: migraciones -> seed -> uvicorn
   .dockerignore
-  alembic/                  migraciones (0001_esquema_inicial: las 6 tablas del Módulo 1)
+  alembic/                  migraciones (0001 esquema inicial, 0002 enlaces a documentos)
   app/
     core/                   config (.env), engine async, logging, errores de dominio
     contabilidad/           NÚCLEO: cuenta/asiento/linea_asiento, crear_asiento (partida doble),
                             balance (consulta SQL), plan de cuentas, serializador, router
+    documentos/             enlace.py — valida el enlace al documento (RUT/PDF); punto de cambio para S3
     features/
       terceros/             clientes y proveedores
       facturas/             registrar factura -> asiento automático
@@ -95,8 +98,8 @@ backend/
     seed.py                 siembra el plan de cuentas (NO crea tablas)
   scripts/reset_db.py       borra la BD, migra y siembra (desarrollo)
   tests/
-    unit/                   34 tests — reglas de negocio, servicios llamados directo
-    integration/            32 tests — app real vía httpx.AsyncClient + SQLite temporal
+    unit/                   38 tests — reglas de negocio, servicios llamados directo
+    integration/            41 tests — app real vía httpx.AsyncClient + SQLite temporal
 
   scripts/seed_demo.py      carga un negocio inventado para ver la interfaz con datos
 scripts/generar_mapa.py     regenera docs/_generado/indice-codigo.md
@@ -115,15 +118,16 @@ docs/
   aprendizaje/             partida-doble, que-es-una-api, async-await, deterministico-vs-ia
   features/
     README.md              índice de las 17 features con su estado
-    pruebas.md             catálogo de las 66 pruebas
+    pruebas.md             catálogo de las 79 pruebas
     <feature>/spec.md      una por feature (las 7 del Módulo 1 + web-ui)
 ```
 
 ### Endpoints disponibles (Módulo 1)
 
-`POST/GET /terceros` · `POST/GET /facturas` · `GET /facturas/{id}` ·
-`POST /facturas/{id}/pagar` · `POST/GET /contratos` · `POST /movimientos` ·
+`POST/GET/PATCH /terceros` · `POST/GET/PATCH /facturas` · `GET /facturas/{id}` ·
+`POST /facturas/{id}/pagar` · `POST/GET/PATCH /contratos` · `POST /movimientos` ·
 `GET /cuentas` · `GET /asientos` (filtro `?libro=`) · `GET /balance` (`?incluir_interna=`)
+_(el `PATCH` de terceros/facturas/contratos solo actualiza el enlace al documento)_
 
 - `http://localhost:8000/` → interfaz gráfica HTML
 - `http://localhost:8000/docs` → documentación interactiva de la API
@@ -133,8 +137,8 @@ docs/
 
 ## Pruebas
 
-- **66 pruebas, todas pasan.** `pytest` desde `backend/`.
-- 34 unitarias + 32 de integración.
+- **79 pruebas, todas pasan.** `pytest` desde `backend/`.
+- 38 unitarias + 41 de integración.
 - Cubren: reglas contables, generación de asientos, libros oficial/interno, la API de punta
   a punta, la interfaz gráfica, que modelos y migraciones no se separen, y la resiliencia
   (500 genérico ante fallos, `/salud`, errores de dominio y validación).
@@ -152,7 +156,7 @@ uv venv --python 3.12
 uv pip install -e ".[dev]"
 cp .env.example .env
 
-.venv/bin/python -m pytest -q            # -> 66 passed
+.venv/bin/python -m pytest -q            # -> 79 passed
 .venv/bin/ruff check .                   # -> All checks passed
 
 .venv/bin/python scripts/reset_db.py     # crea las tablas + siembra el plan de cuentas
@@ -186,6 +190,7 @@ Detalle en [`arquitectura/despliegue.md`](arquitectura/despliegue.md).
 | Documentación | `docs/features/<feature>/`; `analysis/` queda como historial |
 | Forma de trabajo | Por feature: spec → código → tests, en ese orden |
 | **Prioridad del producto (2026-09-09)** | **Registrar movimientos de plata es lo principal.** Facturas, contratos y balance son "análisis avanzado". La interfaz abre en la pantalla de movimientos; el Módulo 2 (WhatsApp) debe priorizar el registro de entradas/salidas. |
+| Documentos (RUT, PDF de factura/contrato) | Por ahora una URL de texto (enlace de Drive). Almacenamiento real (S3 o similar) más adelante, con un adaptador — punto de cambio ya aislado en `app/documentos/`. |
 
 ---
 

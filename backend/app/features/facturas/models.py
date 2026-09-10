@@ -39,4 +39,6 @@ class Factura(Base):
     asiento_id: Mapped[int | None] = mapped_column(
         ForeignKey("asiento.id"), nullable=True
     )
-    archivo_original: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Enlace al PDF de la factura (URL, típicamente de Drive).
+    # Ver docs/features/documentos/spec.md.
+    enlace_documento: Mapped[str | None] = mapped_column(String(500), nullable=True)

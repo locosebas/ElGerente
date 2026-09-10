@@ -14,6 +14,7 @@ from app.contabilidad.asientos import crear_asiento, cuenta_requerida
 from app.contabilidad.models import LibroContable, LineaAsiento, OrigenAsiento
 from app.core.errors import NoEncontrado
 from app.core.logging import log
+from app.documentos.enlace import validar_enlace
 from app.features.facturas.models import EstadoFactura, Factura, TipoFactura
 from app.features.terceros.service import obtener_tercero
 
@@ -30,8 +31,10 @@ async def registrar_factura(
     tercero_id: int,
     subtotal: Decimal,
     iva: Decimal = _CERO,
+    enlace_documento: str | None = None,
 ) -> Factura:
     await obtener_tercero(session, tercero_id)  # 404 si no existe
+    enlace = validar_enlace(enlace_documento)
 
     total = subtotal + iva
     descripcion = (
@@ -77,6 +80,7 @@ async def registrar_factura(
         total=total,
         estado=EstadoFactura.PENDIENTE,
         asiento_id=asiento.id,
+        enlace_documento=enlace,
     )
     session.add(factura)
     await session.commit()
@@ -96,6 +100,17 @@ async def obtener_factura(session: AsyncSession, factura_id: int) -> Factura:
     factura = await session.get(Factura, factura_id)
     if factura is None:
         raise NoEncontrado(f"Factura {factura_id} no existe")
+    return factura
+
+
+async def actualizar_enlace_documento(
+    session: AsyncSession, factura_id: int, enlace_documento: str | None
+) -> Factura:
+    factura = await obtener_factura(session, factura_id)
+    factura.enlace_documento = validar_enlace(enlace_documento)
+    await session.commit()
+    await session.refresh(factura)
+    _log.info("Factura #%d — enlace del documento actualizado", factura_id)
     return factura
 
 

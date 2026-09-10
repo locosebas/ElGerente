@@ -15,6 +15,13 @@ class FacturaCreate(BaseModel):
     tercero_id: int
     subtotal: Decimal = Field(ge=0)
     iva: Decimal = Field(default=Decimal("0"), ge=0)
+    enlace_documento: str | None = None
+
+
+class FacturaEnlace(BaseModel):
+    """Cuerpo del PATCH: solo el enlace al PDF (puede ser null para quitarlo)."""
+
+    enlace_documento: str | None
 
 
 class FacturaOut(BaseModel):
@@ -29,6 +36,7 @@ class FacturaOut(BaseModel):
     total: Decimal
     estado: EstadoFactura
     asiento_id: int | None
+    enlace_documento: str | None
 
 
 class PagarFacturaRequest(BaseModel):

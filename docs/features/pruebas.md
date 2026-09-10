@@ -9,7 +9,7 @@ pytest --collect-only -q
 
 Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 
-**Estado actual: 66 pruebas, todas en verde** (`pytest` → 66 passed). Módulo 1 + interfaz gráfica + endurecimiento (resiliencia, logs, salud) + mapa de código.
+**Estado actual: 79 pruebas, todas en verde** (`pytest` → 79 passed). Módulo 1 + interfaz gráfica + endurecimiento (resiliencia, logs, salud) + mapa de código + enlaces a documentos.
 
 ---
 
@@ -104,6 +104,20 @@ Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 | `test_post_movimiento_cuenta_inexistente_404` | integración | 404 | ✅ |
 | `test_post_movimiento_lineas_no_cuadran_422` | integración | 422 | ✅ |
 | `test_get_asientos_libro_interna` | integración | `?libro=interna` trae solo los internos | ✅ |
+
+### documentos — `tests/unit/documentos/test_enlace.py` + `tests/integration/test_documentos.py`
+
+| id | tipo | verifica | estado |
+|---|---|---|---|
+| `test_validar_enlace_acepta_https` | unit | `https://...` con espacios → se guarda recortado | ✅ |
+| `test_validar_enlace_vacio_es_none` | unit | `None` / `""` / `"   "` → `None` | ✅ |
+| `test_validar_enlace_rechaza_no_url` | unit | sin esquema / `ftp` / `javascript:` → `DatosInvalidos` | ✅ |
+| `test_validar_enlace_rechaza_muy_largo` | unit | > 500 chars → `DatosInvalidos` | ✅ |
+| `test_crear_tercero_con_enlace_rut` | integración | `POST /terceros` con `enlace_rut` → aparece en `GET` | ✅ |
+| `test_patch_factura_enlace` | integración | `PATCH /facturas/{id}` pone el enlace; `GET` lo devuelve | ✅ |
+| `test_patch_contrato_quitar_enlace` | integración | `PATCH` con `null` deja el enlace en `None` | ✅ |
+| `test_post_factura_enlace_invalido_422` | integración | enlace sin esquema → 422 | ✅ |
+| `test_patch_tercero_inexistente_404` | integración | `PATCH /terceros/9999` → 404 | ✅ |
 
 ### infraestructura — `tests/integration/test_migraciones.py`
 

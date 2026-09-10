@@ -69,11 +69,16 @@
                 <option value="proveedor">proveedor</option>
               </select>
             </label>
+          </div>
+          <div class="row">
+            <label class="ancho">Enlace al RUT (Drive)
+              <input name="enlace_rut" type="url" placeholder="https://drive.google.com/...">
+            </label>
             <button type="submit">Agregar</button>
           </div>
         </form>
         <table class="grid">
-          <thead><tr><th>ID</th><th>Nombre</th><th>NIT / Cédula</th><th>Tipo</th></tr></thead>
+          <thead><tr><th>ID</th><th>Nombre</th><th>NIT / Cédula</th><th>Tipo</th><th>RUT</th></tr></thead>
           <tbody id="terceros-body"></tbody>
         </table>
       </section>
@@ -96,13 +101,16 @@
           <div class="row">
             <label>Subtotal <input name="subtotal" type="number" step="0.01" min="0" required></label>
             <label>IVA <input name="iva" type="number" step="0.01" min="0" value="0"></label>
+            <label class="ancho">Enlace al PDF (Drive)
+              <input name="enlace_documento" type="url" placeholder="https://drive.google.com/...">
+            </label>
             <button type="submit">Registrar factura</button>
           </div>
         </form>
         <table class="grid">
           <thead><tr>
             <th>Número</th><th>Tipo</th><th>Fecha</th><th class="num">Subtotal</th>
-            <th class="num">IVA</th><th class="num">Total</th><th>Estado</th><th></th>
+            <th class="num">IVA</th><th class="num">Total</th><th>Estado</th><th>PDF</th><th></th>
           </tr></thead>
           <tbody id="facturas-body"></tbody>
         </table>
@@ -120,11 +128,14 @@
           <div class="row">
             <label>Fecha inicio <input name="fecha_inicio" type="date" required></label>
             <label>Fecha fin <input name="fecha_fin" type="date"></label>
+            <label class="ancho">Enlace al PDF (Drive)
+              <input name="enlace_documento" type="url" placeholder="https://drive.google.com/...">
+            </label>
             <button type="submit">Registrar contrato</button>
           </div>
         </form>
         <table class="grid">
-          <thead><tr><th>ID</th><th>Tercero</th><th>Objeto</th><th class="num">Valor</th><th>Vigencia</th><th>Estado</th></tr></thead>
+          <thead><tr><th>ID</th><th>Tercero</th><th>Objeto</th><th class="num">Valor</th><th>Vigencia</th><th>Estado</th><th>PDF</th></tr></thead>
           <tbody id="contratos-body"></tbody>
         </table>
       </section>
