@@ -62,13 +62,18 @@ No crea tablas. Lee de `cuenta`, `asiento` y `linea_asiento`.
 | `libro` | `oficial` \| `interna` \| `todos` | `oficial` |
 | `desde` | fecha `AAAA-MM-DD` | sin límite |
 | `hasta` | fecha `AAAA-MM-DD` | sin límite |
+| `tercero_id` | id de un tercero | sin filtro |
+
+Con `tercero_id` se ve el saldo de cada cuenta **solo con ese actor** — p. ej.
+`GET /balance?tercero_id=<Banco A>` para saber cuánto se le debe a ese banco en concreto.
 
 Respuesta: `SaldoCuenta[]` → `{ "cuenta_codigo", "cuenta_nombre", "tipo", "saldo" }`.
 La interfaz agrupa por `tipo` y calcula el subtotal de cada grupo.
 
 ### `GET /cuentas/{codigo}/movimientos`
 
-Mismos filtros (`libro`, `desde`, `hasta`). Respuesta:
+Mismos filtros (`libro`, `desde`, `hasta`, `tercero_id`). Cada movimiento trae también el
+`tercero_id` y `tercero_nombre` del asiento. Respuesta:
 
 ```json
 {
@@ -104,7 +109,7 @@ Mismos filtros (`libro`, `desde`, `hasta`). Respuesta:
 | id del test | tipo | qué verifica | archivo |
 |---|---|---|---|
 | `test_balance_signo_por_naturaleza` | unit | activo con más débito → +; pasivo con más crédito → + | `tests/unit/contabilidad/test_balance.py` |
-| `test_balance_incluye_cuentas_sin_movimiento` | unit | las 10 cuentas presentes, sin líneas → saldo 0 | `tests/unit/contabilidad/test_balance.py` |
+| `test_balance_incluye_cuentas_sin_movimiento` | unit | las 11 cuentas presentes, sin líneas → saldo 0 | `tests/unit/contabilidad/test_balance.py` |
 | `test_balance_libro_oficial_interna_todos` | unit | los tres modos dan saldos distintos según el asiento | `tests/unit/contabilidad/test_balance.py` |
 | `test_balance_filtra_por_periodo` | unit | `desde`/`hasta` deja fuera los asientos de otras fechas | `tests/unit/contabilidad/test_balance.py` |
 | `test_balance_desde_mayor_que_hasta` | unit | `DatosInvalidos` | `tests/unit/contabilidad/test_balance.py` |

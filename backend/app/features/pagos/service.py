@@ -57,6 +57,7 @@ async def pagar_factura(
         lineas=lineas,
         libro=LibroContable.OFICIAL,
         documento_soporte=descripcion,
+        tercero_id=factura.tercero_id,
     )
 
     factura.estado = EstadoFactura.PAGADA

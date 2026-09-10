@@ -99,6 +99,7 @@ graph TD
 | el **árbol de análisis** de la interfaz (tipo→cuenta→extracto) o el selector Oficial/Interno/Total / año-mes | `app/web/app.js` | `cargarBalance`, `montarControles`, `paramsAnalisis` | `features/web-ui/spec.md §5` |
 | qué campos de un formulario son **obligatorios** | `app/web/index.html` (marca `*`) + el `*Create` en `app/features/<f>/schemas.py` (Pydantic `required`) | — | `features/web-ui/spec.md §5` |
 | la validación central de **partida doble** | `app/contabilidad/asientos.py` | `crear_asiento`, `Asiento.cuadra` | `features/contabilidad-nucleo/spec.md §3` |
+| el **actor / tercero de un asiento** (con quién se hizo) o los tipos de tercero | `app/contabilidad/models.py` (`Asiento.tercero_id`) + `app/features/terceros/models.py` (`TipoTercero`) + cada `service.py` que lo pasa a `crear_asiento` | `Asiento.tercero`, `TipoTercero` | `features/terceros/spec.md` |
 | un **campo nuevo** en una tabla | `app/features/<f>/models.py` (o `app/contabilidad/models.py`) → luego `alembic revision --autogenerate` | — | el `spec.md §4` de esa feature |
 | el **enlace a un documento** (RUT, PDF de factura/contrato) o su validación | `app/documentos/enlace.py` + campos `enlace_rut` / `enlace_documento` en los modelos | `validar_enlace` | `features/documentos/spec.md` |
 | pasar los documentos a **S3 / almacenamiento real** | `app/documentos/` (agregar `almacenamiento.py` con adaptador) | — | `features/documentos/spec.md §8` |

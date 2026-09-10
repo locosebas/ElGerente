@@ -6,9 +6,10 @@
 
 ## 1. Propósito
 
-Registrar y listar a las personas o empresas con las que se hacen operaciones: **clientes**
-(a quienes se les emite factura) y **proveedores** (de quienes se recibe factura). Una
-factura o un contrato siempre apunta a un tercero.
+Registrar a las personas o empresas con las que se hacen operaciones — el **actor externo**
+de cada transacción. **Todo asiento contable registra con qué tercero se hizo** (una factura
+apunta a su cliente/proveedor; un movimiento manual apunta al banco, el socio, el empleado,
+etc.). Así se puede responder "¿cuánto le debo al Banco A?" o "¿cuánto retiró el socio?".
 
 ## 2. Alcance
 
@@ -24,7 +25,9 @@ factura o un contrato siempre apunta a un tercero.
 
 ## 3. Reglas de negocio
 
-1. `tipo` es `cliente` o `proveedor`, obligatorio.
+1. `tipo` es uno de: `cliente`, `proveedor`, `banco`, `empleado`, `socio`, `otro`. Obligatorio.
+   - `banco` permite distinguir "Banco A" de "Banco B" en deudas, consignaciones, etc.
+   - `socio` es el/los dueño/s (retiros, aportes).
 2. `nombre` y `nit_cedula` son texto obligatorio. No se valida formato del NIT en v1 (se
    guarda tal cual se recibe).
 3. No hay unicidad forzada sobre `nit_cedula` en v1 (se puede registrar dos veces el mismo
@@ -39,7 +42,7 @@ factura o un contrato siempre apunta a un tercero.
 | `id` | int, PK | |
 | `nombre` | str(150) | obligatorio |
 | `nit_cedula` | str(20) | obligatorio |
-| `tipo` | enum `TipoTercero` | `cliente` \| `proveedor` |
+| `tipo` | enum `TipoTercero` | `cliente` \| `proveedor` \| `banco` \| `empleado` \| `socio` \| `otro` |
 | `enlace_rut` | str(500), nullable | URL al RUT — ver [`documentos/spec.md`](../documentos/spec.md) |
 
 ## 5. Interfaz

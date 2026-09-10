@@ -73,9 +73,13 @@ async def crear_asiento(
     lineas: list[LineaAsiento],
     libro: LibroContable = LibroContable.OFICIAL,
     documento_soporte: str | None = None,
+    tercero_id: int | None = None,
 ) -> Asiento:
     """Crea y valida un asiento. Hace `flush` (deja el id disponible),
     NO `commit` — quien llama decide cuándo confirmar la transacción.
+
+    `tercero_id` es con qué actor externo se hizo la transacción; lo pasa la
+    feature (la validación de que exista es responsabilidad de la feature).
     """
     if libro == LibroContable.OFICIAL and not (documento_soporte or "").strip():
         raise DocumentoSoporteRequerido(
@@ -88,6 +92,7 @@ async def crear_asiento(
         origen=origen,
         libro=libro,
         documento_soporte=documento_soporte if libro == LibroContable.OFICIAL else None,
+        tercero_id=tercero_id,
         lineas=lineas,
     )
 

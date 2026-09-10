@@ -21,6 +21,7 @@ async def crear_movimiento_manual(
         fecha=data.fecha,
         descripcion=data.descripcion,
         libro=data.libro,
+        tercero_id=data.tercero_id,
         documento_soporte=data.documento_soporte,
         lineas=[linea.model_dump() for linea in data.lineas],
     )

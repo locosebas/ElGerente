@@ -6,6 +6,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 import pytest
+import pytest_asyncio
 
 
 def pytest_collection_modifyitems(items) -> None:
@@ -22,3 +23,12 @@ def saldos():
         return {c["cuenta_codigo"]: Decimal(str(c["saldo"])) for c in balance_json}
 
     return _saldos
+
+
+@pytest_asyncio.fixture
+async def actor(client) -> int:
+    """Un tercero cualquiera creado por la API — devuelve su id."""
+    r = await client.post(
+        "/terceros", json={"nombre": "Banco Test", "nit_cedula": "1", "tipo": "banco"}
+    )
+    return r.json()["id"]

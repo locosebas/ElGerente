@@ -21,76 +21,76 @@ async def _contar(session) -> int:
     return (await session.execute(select(func.count()).select_from(Asiento))).scalar_one()
 
 
-async def test_movimiento_oficial_con_soporte_ok(db_session):
-    asiento = await registrar_movimiento_manual(
+async def _mov(session, tercero, **kw):
+    kw.setdefault("fecha", HOY)
+    kw.setdefault("descripcion", "prueba")
+    kw.setdefault("libro", LibroContable.INTERNA)
+    kw.setdefault("documento_soporte", None)
+    return await registrar_movimiento_manual(session, tercero_id=tercero, **kw)
+
+
+async def test_movimiento_oficial_con_soporte_ok(db_session, tercero_id):
+    asiento = await _mov(
         db_session,
-        fecha=HOY,
+        tercero_id,
         descripcion="Ajuste caja menor",
         libro=LibroContable.OFICIAL,
         documento_soporte="Recibo #45",
         lineas=[_l("5195", debito="10000"), _l("1105", credito="10000")],
     )
     assert asiento.origen is OrigenAsiento.MANUAL
-    assert asiento.libro is LibroContable.OFICIAL
+    assert asiento.tercero_id == tercero_id
 
 
-async def test_movimiento_oficial_sin_soporte_falla(db_session):
+async def test_movimiento_oficial_sin_soporte_falla(db_session, tercero_id):
     with pytest.raises(DatosInvalidos):
-        await registrar_movimiento_manual(
+        await _mov(
             db_session,
-            fecha=HOY,
-            descripcion="sin soporte",
+            tercero_id,
             libro=LibroContable.OFICIAL,
-            documento_soporte=None,
             lineas=[_l("5195", debito="10000"), _l("1105", credito="10000")],
         )
 
 
-async def test_movimiento_interno_sin_soporte_ok(db_session):
-    asiento = await registrar_movimiento_manual(
+async def test_movimiento_interno_sin_soporte_ok(db_session, tercero_id):
+    asiento = await _mov(
         db_session,
-        fecha=HOY,
+        tercero_id,
         descripcion="Retiro del dueño",
-        libro=LibroContable.INTERNA,
-        documento_soporte=None,
         lineas=[_l("2905", debito="50000"), _l("1105", credito="50000")],
     )
     assert asiento.libro is LibroContable.INTERNA
 
 
-async def test_movimiento_menos_de_dos_lineas(db_session):
-    with pytest.raises(DatosInvalidos):
-        await registrar_movimiento_manual(
+async def test_movimiento_tercero_inexistente(db_session):
+    with pytest.raises(NoEncontrado):
+        await _mov(
             db_session,
-            fecha=HOY,
-            descripcion="una línea",
-            libro=LibroContable.INTERNA,
-            documento_soporte=None,
-            lineas=[_l("1105", debito="1")],
+            9999,
+            lineas=[_l("2905", debito="1"), _l("1105", credito="1")],
         )
 
 
-async def test_movimiento_lineas_no_cuadran(db_session):
+async def test_movimiento_menos_de_dos_lineas(db_session, tercero_id):
     with pytest.raises(DatosInvalidos):
-        await registrar_movimiento_manual(
+        await _mov(db_session, tercero_id, lineas=[_l("1105", debito="1")])
+
+
+async def test_movimiento_lineas_no_cuadran(db_session, tercero_id):
+    with pytest.raises(DatosInvalidos):
+        await _mov(
             db_session,
-            fecha=HOY,
-            descripcion="descuadrado",
-            libro=LibroContable.INTERNA,
-            documento_soporte=None,
+            tercero_id,
             lineas=[_l("5195", debito="100"), _l("1105", credito="90")],
         )
     await db_session.rollback()
     assert await _contar(db_session) == 0
 
 
-async def test_movimiento_cuenta_inexistente(db_session):
+async def test_movimiento_cuenta_inexistente(db_session, tercero_id):
     with pytest.raises(NoEncontrado):
-        await registrar_movimiento_manual(
+        await _mov(
             db_session,
-            fecha=HOY,
-            descripcion="cuenta mala",
-            libro=LibroContable.INTERNA,
-            documento_soporte=None,
+            tercero_id,
             lineas=[_l("9999", debito="1"), _l("1105", credito="1")],
         )

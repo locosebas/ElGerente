@@ -38,6 +38,7 @@ async def listar_asientos(
     libro: LibroContable | None = None,
     desde: date | None = None,
     hasta: date | None = None,
+    tercero_id: int | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     stmt = select(Asiento).order_by(Asiento.fecha, Asiento.id)
@@ -47,6 +48,8 @@ async def listar_asientos(
         stmt = stmt.where(Asiento.fecha >= desde)
     if hasta is not None:
         stmt = stmt.where(Asiento.fecha <= hasta)
+    if tercero_id is not None:
+        stmt = stmt.where(Asiento.tercero_id == tercero_id)
     asientos = (await db.execute(stmt)).scalars().all()
     return [serializar_asiento(a) for a in asientos]
 
@@ -56,9 +59,12 @@ async def obtener_balance(
     libro: FiltroLibro = FiltroLibro.OFICIAL,
     desde: date | None = None,
     hasta: date | None = None,
+    tercero_id: int | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
-    return await calcular_balance(db, libro=libro, desde=desde, hasta=hasta)
+    return await calcular_balance(
+        db, libro=libro, desde=desde, hasta=hasta, tercero_id=tercero_id
+    )
 
 
 @router.get("/cuentas/{codigo}/movimientos", response_model=DetalleCuentaOut)
@@ -67,6 +73,9 @@ async def detalle_de_cuenta(
     libro: FiltroLibro = FiltroLibro.OFICIAL,
     desde: date | None = None,
     hasta: date | None = None,
+    tercero_id: int | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    return await movimientos_de_cuenta(db, codigo, libro=libro, desde=desde, hasta=hasta)
+    return await movimientos_de_cuenta(
+        db, codigo, libro=libro, desde=desde, hasta=hasta, tercero_id=tercero_id
+    )

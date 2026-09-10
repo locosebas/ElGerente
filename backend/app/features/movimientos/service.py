@@ -17,6 +17,7 @@ from app.contabilidad.asientos import (
 from app.contabilidad.models import Asiento, LibroContable, LineaAsiento, OrigenAsiento
 from app.core.errors import DatosInvalidos, NoEncontrado
 from app.core.logging import log
+from app.features.terceros.service import obtener_tercero
 
 _CERO = Decimal("0")
 _log = log("movimientos")
@@ -28,9 +29,12 @@ async def registrar_movimiento_manual(
     fecha: date,
     descripcion: str,
     libro: LibroContable,
+    tercero_id: int,
     documento_soporte: str | None,
     lineas: list[dict],
 ) -> Asiento:
+    tercero = await obtener_tercero(session, tercero_id)  # 404 si no existe
+
     if len(lineas) < 2:
         raise DatosInvalidos("Un asiento manual requiere al menos 2 líneas")
 
@@ -56,12 +60,16 @@ async def registrar_movimiento_manual(
             lineas=lineas_orm,
             libro=libro,
             documento_soporte=documento_soporte,
+            tercero_id=tercero_id,
         )
     except AsientoDesbalanceado as exc:
         # En un movimiento manual, el descuadre es error del usuario (422),
         # no una falla del sistema (500).
         raise DatosInvalidos(str(exc)) from exc
 
+    # Deja el tercero ya cargado en memoria para que el serializador de la
+    # respuesta no dispare una carga perezosa (prohibida en async).
+    asiento.tercero = tercero
     await session.commit()
     _log.info(
         "Movimiento manual registrado — asiento #%d libro=%s lineas=%d",

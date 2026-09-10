@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 
+import app.models  # noqa: F401  — registra todos los modelos antes de configurar el mapper
 from app.contabilidad.plan_cuentas import sembrar_plan_de_cuentas
 from app.core.db import SessionLocal
 

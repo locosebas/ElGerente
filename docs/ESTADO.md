@@ -4,7 +4,7 @@ _Última actualización: 2026-09-09_
 
 Resumen: el **Módulo 1 (motor contable)**, su **interfaz gráfica HTML** y el
 **endurecimiento** (resiliencia a fallos, logs, endpoint de salud, imagen Docker) están
-listos — arquitectura por features, base de datos asíncrona, **85 pruebas en verde**.
+listos — arquitectura por features, base de datos asíncrona, **90 pruebas en verde**.
 Listo para montar en local y probar con clientes de verdad. Falta el Módulo 2 (WhatsApp).
 
 ---
@@ -21,6 +21,7 @@ Listo para montar en local y probar con clientes de verdad. Falta el Módulo 2 (
 | 2d | Mapa de navegación del código para mantenimiento barato (`docs/MAPA.md`, índice generado, `CLAUDE.md`) | ✅ hecho — 66 tests |
 | 2e | Enlaces a documentos (RUT del tercero, PDF de factura/contrato) — una URL por ahora, S3 después | ✅ hecho — 79 tests |
 | 2f | Análisis mejorado: árbol Activos/Pasivos/… → cuenta → extracto; filtro Oficial/Interno/Total; filtro por año/mes; campos obligatorios marcados | ✅ hecho — 85 tests |
+| 2g | Cada asiento registra su **actor externo** (`tercero_id`); `tercero` gana tipos `banco`/`empleado`/`socio`/`otro`; filtro por actor en el análisis; cuenta `2105 Obligaciones financieras` | ✅ hecho — 90 tests |
 | 3 | Documentación del Módulo 2 (specs de las features de WhatsApp) | ⬜ pendiente |
 | 4 | Construir el Módulo 2 (webhook, conversaciones, asistente, flujos) | ⬜ pendiente |
 | 5 | Cierre (script de simulación, catálogo final, READMEs) | ⬜ pendiente |
@@ -42,7 +43,7 @@ Leyenda: ✅ hecho y verificado · 🟨 en progreso · ⬜ pendiente
 |---|---|---|---|---|
 | 1 | `contabilidad-nucleo` | ✅ | `backend/app/contabilidad/` | [spec](features/contabilidad-nucleo/spec.md) |
 | 2 | `balance` | ✅ | `backend/app/contabilidad/balance.py` | [spec](features/balance/spec.md) |
-| 3 | `terceros` | ✅ | `backend/app/features/terceros/` | [spec](features/terceros/spec.md) |
+| 3 | `terceros` (actor externo de cada transacción — cliente/proveedor/banco/empleado/socio/otro) | ✅ | `backend/app/features/terceros/` | [spec](features/terceros/spec.md) |
 | 4 | `facturas` | ✅ | `backend/app/features/facturas/` | [spec](features/facturas/spec.md) |
 | 5 | `pagos` | ✅ | `backend/app/features/pagos/` | [spec](features/pagos/spec.md) |
 | 6 | `contratos` | ✅ | `backend/app/features/contratos/` | [spec](features/contratos/spec.md) |
@@ -80,7 +81,7 @@ backend/
   Dockerfile                imagen del backend (multi-etapa, usuario sin privilegios)
   docker-entrypoint.sh      arranque: migraciones -> seed -> uvicorn
   .dockerignore
-  alembic/                  migraciones (0001 esquema inicial, 0002 enlaces a documentos)
+  alembic/                  migraciones (0001 esquema, 0002 enlaces a documentos, 0003 tercero del asiento)
   app/
     core/                   config (.env), engine async, logging, errores de dominio
     contabilidad/           NÚCLEO: cuenta/asiento/linea_asiento, crear_asiento (partida doble),
@@ -119,7 +120,7 @@ docs/
   aprendizaje/             partida-doble, que-es-una-api, async-await, deterministico-vs-ia
   features/
     README.md              índice de las 17 features con su estado
-    pruebas.md             catálogo de las 85 pruebas
+    pruebas.md             catálogo de las 90 pruebas
     <feature>/spec.md      una por feature (las 7 del Módulo 1 + web-ui)
 ```
 
@@ -128,7 +129,7 @@ docs/
 `POST/GET/PATCH /terceros` · `POST/GET/PATCH /facturas` · `GET /facturas/{id}` ·
 `POST /facturas/{id}/pagar` · `POST/GET/PATCH /contratos` · `POST /movimientos` ·
 `GET /cuentas` · `GET /cuentas/{codigo}/movimientos` (extracto) ·
-`GET /asientos` (`?libro= &desde= &hasta=`) · `GET /balance` (`?libro=oficial|interna|todos &desde= &hasta=`)
+`GET /asientos` y `GET /balance` (`?libro=oficial|interna|todos &desde= &hasta= &tercero_id=`)
 _(el `PATCH` de terceros/facturas/contratos solo actualiza el enlace al documento)_
 
 - `http://localhost:8000/` → interfaz gráfica HTML
@@ -139,8 +140,8 @@ _(el `PATCH` de terceros/facturas/contratos solo actualiza el enlace al document
 
 ## Pruebas
 
-- **85 pruebas, todas pasan.** `pytest` desde `backend/`.
-- 44 unitarias + 41 de integración.
+- **90 pruebas, todas pasan.** `pytest` desde `backend/`.
+- 48 unitarias + 42 de integración.
 - Cubren: reglas contables, generación de asientos, libros oficial/interno, la API de punta
   a punta, la interfaz gráfica, que modelos y migraciones no se separen, y la resiliencia
   (500 genérico ante fallos, `/salud`, errores de dominio y validación).
@@ -158,7 +159,7 @@ uv venv --python 3.12
 uv pip install -e ".[dev]"
 cp .env.example .env
 
-.venv/bin/python -m pytest -q            # -> 85 passed
+.venv/bin/python -m pytest -q            # -> 90 passed
 .venv/bin/ruff check .                   # -> All checks passed
 
 .venv/bin/python scripts/reset_db.py     # crea las tablas + siembra el plan de cuentas
@@ -193,6 +194,7 @@ Detalle en [`arquitectura/despliegue.md`](arquitectura/despliegue.md).
 | Forma de trabajo | Por feature: spec → código → tests, en ese orden |
 | **Prioridad del producto (2026-09-09)** | **Registrar movimientos de plata es lo principal.** Facturas, contratos y balance son "análisis avanzado". La interfaz abre en la pantalla de movimientos; el Módulo 2 (WhatsApp) debe priorizar el registro de entradas/salidas. |
 | Documentos (RUT, PDF de factura/contrato) | Por ahora una URL de texto (enlace de Drive). Almacenamiento real (S3 o similar) más adelante, con un adaptador — punto de cambio ya aislado en `app/documentos/`. |
+| Actor de las transacciones | **Todo asiento registra su `tercero_id`** (con quién se hizo). Un banco es un tipo de tercero, así se distingue "deuda con Banco A" de "con Banco B" filtrando por `tercero_id`. Sub-cuentas por banco quedan para si el plan de cuentas deja de ser plano. |
 
 ---
 

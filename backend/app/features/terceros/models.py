@@ -12,6 +12,10 @@ from app.core.db import Base
 class TipoTercero(str, enum.Enum):
     CLIENTE = "cliente"
     PROVEEDOR = "proveedor"
+    BANCO = "banco"
+    EMPLEADO = "empleado"
+    SOCIO = "socio"
+    OTRO = "otro"
 
 
 class Tercero(Base):

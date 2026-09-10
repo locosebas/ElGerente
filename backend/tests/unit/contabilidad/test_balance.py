@@ -55,7 +55,7 @@ async def test_balance_signo_por_naturaleza(db_session):
 async def test_balance_incluye_cuentas_sin_movimiento(db_session):
     balance = await calcular_balance(db_session)
     codigos = {fila["cuenta_codigo"] for fila in balance}
-    assert len(balance) == 10
+    assert len(balance) == 11
     assert "2408" in codigos
     assert all(fila["saldo"] == Decimal("0.00") or fila["saldo"] == 0 for fila in balance)
 

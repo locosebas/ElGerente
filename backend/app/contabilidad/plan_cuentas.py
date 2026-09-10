@@ -15,6 +15,7 @@ PLAN_DE_CUENTAS_INICIAL: list[tuple[str, str, TipoCuenta]] = [
     ("1105", "Caja", TipoCuenta.ACTIVO),
     ("1110", "Bancos", TipoCuenta.ACTIVO),
     ("1305", "Cuentas por cobrar", TipoCuenta.ACTIVO),
+    ("2105", "Obligaciones financieras", TipoCuenta.PASIVO),
     ("2205", "Cuentas por pagar", TipoCuenta.PASIVO),
     ("2408", "Impuestos por pagar - IVA", TipoCuenta.PASIVO),
     ("2905", "Cuentas con el dueño", TipoCuenta.PASIVO),

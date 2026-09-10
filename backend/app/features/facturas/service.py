@@ -68,6 +68,7 @@ async def registrar_factura(
         lineas=lineas,
         libro=LibroContable.OFICIAL,
         documento_soporte=descripcion,
+        tercero_id=tercero_id,
     )
 
     factura = Factura(

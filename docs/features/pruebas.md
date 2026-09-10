@@ -9,7 +9,9 @@ pytest --collect-only -q
 
 Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 
-**Estado actual: 85 pruebas, todas en verde** (`pytest` → 85 passed). Módulo 1 + interfaz gráfica (árbol de análisis, filtro libro/periodo, campos obligatorios) + endurecimiento + mapa de código + enlaces a documentos.
+**Estado actual: 90 pruebas, todas en verde** (`pytest` → 90 passed). Módulo 1 + interfaz gráfica (árbol de análisis, filtro libro/periodo/actor, campos obligatorios) + endurecimiento + mapa de código + enlaces a documentos + tercero/actor por asiento.
+
+> Este catálogo se mantiene a mano. La lista real: `pytest --collect-only -q`.
 
 ---
 
@@ -26,12 +28,13 @@ Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 | `test_interna_ignora_soporte` | unit | `libro=interna` guarda `documento_soporte=None` aunque se envíe | ✅ |
 | `test_cuadre_usa_decimal_exacto` | unit | `0.10 + 0.20 == 0.30` exacto con `Decimal` | ✅ |
 | `test_seed_es_idempotente` | unit | sembrar dos veces no duplica cuentas | ✅ |
-| `test_get_cuentas_devuelve_plan_completo` | integración | `GET /cuentas` → 10 cuentas, en orden de código | ✅ |
+| `test_get_cuentas_devuelve_plan_completo` | integración | `GET /cuentas` → 11 cuentas, en orden de código | ✅ |
 | `test_get_asientos_filtra_por_libro` | integración | `?libro=interna` / `?libro=oficial` | ✅ |
 | `test_get_balance_libro_y_periodo` | integración | `?libro=oficial\|interna\|todos` y `?desde=&hasta=` filtran bien; `desde>hasta` → 422 | ✅ |
 | `test_get_balance_refleja_factura_y_pago` | integración | balance tras registrar y pagar una factura recibida | ✅ |
 | `test_get_cuenta_movimientos_end_to_end` | integración | `GET /cuentas/2205/movimientos` → extracto con saldo acumulado correcto | ✅ |
 | `test_get_cuenta_movimientos_404` | integración | código inexistente → 404 | ✅ |
+| `test_balance_y_extracto_filtran_por_tercero` | integración | `?tercero_id=` aísla el saldo/extracto de una cuenta con un actor concreto (deuda banco A vs banco B) | ✅ |
 | `test_invariante_todos_los_asientos_cuadran` | integración | cada asiento de `GET /asientos` cuadra línea a línea | ✅ |
 
 ### balance — `tests/unit/contabilidad/test_balance.py` + `test_detalle_cuenta.py`
@@ -39,7 +42,7 @@ Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 | id | tipo | verifica | estado |
 |---|---|---|---|
 | `test_balance_signo_por_naturaleza` | unit | activo con más débito → +; patrimonio con más crédito → + | ✅ |
-| `test_balance_incluye_cuentas_sin_movimiento` | unit | las 10 cuentas aparecen, las sin líneas con saldo 0 | ✅ |
+| `test_balance_incluye_cuentas_sin_movimiento` | unit | las 11 cuentas aparecen, las sin líneas con saldo 0 | ✅ |
 | `test_balance_libro_oficial_interna_todos` | unit | los tres modos dan saldos distintos según el asiento | ✅ |
 | `test_balance_filtra_por_periodo` | unit | `desde`/`hasta` deja fuera asientos de otras fechas | ✅ |
 | `test_balance_desde_mayor_que_hasta` | unit | `DatosInvalidos` | ✅ |
@@ -55,6 +58,7 @@ Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 | `test_obtener_tercero_inexistente` | unit | id inexistente → `NoEncontrado` | ✅ |
 | `test_post_terceros_ok` | integración | `POST` → 200 y aparece en `GET /terceros` | ✅ |
 | `test_post_terceros_tipo_invalido` | integración | `tipo` inválido → 422 | ✅ |
+| `test_post_terceros_tipos_nuevos` | integración | `banco` / `empleado` / `socio` / `otro` → 200 | ✅ |
 
 ### facturas — `tests/unit/facturas/` + `tests/integration/test_facturas.py`
 
@@ -99,17 +103,20 @@ Leyenda de estado: ⬜ por escribir · ✅ escrito y pasando
 
 | id | tipo | verifica | estado |
 |---|---|---|---|
-| `test_movimiento_oficial_con_soporte_ok` | unit | asiento `origen=manual`, `libro=oficial` | ✅ |
+| `test_movimiento_oficial_con_soporte_ok` | unit | asiento `origen=manual`, `libro=oficial`, `tercero_id` guardado | ✅ |
 | `test_movimiento_oficial_sin_soporte_falla` | unit | `DatosInvalidos` | ✅ |
 | `test_movimiento_interno_sin_soporte_ok` | unit | OK | ✅ |
+| `test_movimiento_tercero_inexistente` | unit | `NoEncontrado` | ✅ |
 | `test_movimiento_menos_de_dos_lineas` | unit | `DatosInvalidos` | ✅ |
 | `test_movimiento_lineas_no_cuadran` | unit | `DatosInvalidos`, 0 filas | ✅ |
 | `test_movimiento_cuenta_inexistente` | unit | `NoEncontrado` | ✅ |
 | `test_post_movimiento_oficial_sin_soporte_422` | integración | 422 | ✅ |
-| `test_post_movimiento_interno_no_afecta_balance_oficial` | integración | balance oficial sin cambio; con flag sí | ✅ |
+| `test_post_movimiento_sin_tercero_422` | integración | falta `tercero_id` → 422 | ✅ |
+| `test_post_movimiento_tercero_inexistente_404` | integración | `tercero_id` que no existe → 404 | ✅ |
+| `test_post_movimiento_interno_no_afecta_balance_oficial` | integración | balance oficial sin cambio; con `libro=todos` sí | ✅ |
 | `test_post_movimiento_cuenta_inexistente_404` | integración | 404 | ✅ |
 | `test_post_movimiento_lineas_no_cuadran_422` | integración | 422 | ✅ |
-| `test_get_asientos_libro_interna` | integración | `?libro=interna` trae solo los internos | ✅ |
+| `test_get_asientos_libro_interna` | integración | `?libro=interna` trae solo los internos; trae `tercero_nombre` | ✅ |
 
 ### documentos — `tests/unit/documentos/test_enlace.py` + `tests/integration/test_documentos.py`
 

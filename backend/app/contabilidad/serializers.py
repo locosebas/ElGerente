@@ -19,6 +19,8 @@ def serializar_asiento(asiento: Asiento) -> dict:
         "origen": asiento.origen,
         "libro": asiento.libro,
         "documento_soporte": asiento.documento_soporte,
+        "tercero_id": asiento.tercero_id,
+        "tercero_nombre": asiento.tercero.nombre if asiento.tercero else None,
         "created_at": asiento.created_at,
         "lineas": [
             {

@@ -18,5 +18,6 @@ class MovimientoManualCreate(BaseModel):
     fecha: date
     descripcion: str
     libro: LibroContable
+    tercero_id: int  # con qué actor externo se hizo (obligatorio)
     documento_soporte: str | None = None
     lineas: list[LineaMovimientoIn]

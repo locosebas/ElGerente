@@ -16,7 +16,7 @@ async def test_get_cuentas_devuelve_plan_completo(client):
     assert r.status_code == 200
     cuentas = r.json()
     assert [c["codigo"] for c in cuentas] == [
-        "1105", "1110", "1305", "2205", "2408", "2905", "3115", "4135", "5195", "5905"
+        "1105", "1110", "1305", "2105", "2205", "2408", "2905", "3115", "4135", "5195", "5905"
     ]
 
 
@@ -52,13 +52,14 @@ async def test_get_balance_refleja_factura_y_pago(client, saldos):
     assert b["1110"] == Decimal("-595000.00")
 
 
-async def test_get_asientos_filtra_por_libro(client):
+async def test_get_asientos_filtra_por_libro(client, actor):
     r = await client.post(
         "/movimientos",
         json={
             "fecha": "2026-09-10",
             "descripcion": "Retiro del dueño",
             "libro": "interna",
+            "tercero_id": actor,
             "documento_soporte": None,
             "lineas": [
                 {"cuenta_codigo": "2905", "debito": "50000", "credito": "0"},
@@ -76,13 +77,14 @@ async def test_get_asientos_filtra_por_libro(client):
     assert oficiales == []
 
 
-async def test_get_balance_libro_y_periodo(client, saldos):
+async def test_get_balance_libro_y_periodo(client, saldos, actor):
     await client.post(
         "/movimientos",
         json={
             "fecha": "2026-09-12",
             "descripcion": "Retiro",
             "libro": "interna",
+            "tercero_id": actor,
             "lineas": [
                 {"cuenta_codigo": "2905", "debito": "50000", "credito": "0"},
                 {"cuenta_codigo": "1105", "debito": "0", "credito": "50000"},
@@ -139,6 +141,44 @@ async def test_get_cuenta_movimientos_404(client):
     assert r.status_code == 404
 
 
+async def test_balance_y_extracto_filtran_por_tercero(client, saldos):
+    # Dos proveedores, una factura recibida cada uno.
+    ids = []
+    for i, sub in enumerate(["100000", "300000"]):
+        r = await client.post(
+            "/terceros",
+            json={"nombre": f"Prov {i}", "nit_cedula": str(i), "tipo": "proveedor"},
+        )
+        ids.append(r.json()["id"])
+        await client.post(
+            "/facturas",
+            json={
+                "tipo": "recibida",
+                "numero": f"F{i}",
+                "fecha": "2026-09-01",
+                "tercero_id": r.json()["id"],
+                "subtotal": sub,
+                "iva": "0",
+            },
+        )
+
+    todos = saldos((await client.get("/balance")).json())
+    solo_p0 = saldos(
+        (await client.get("/balance", params={"tercero_id": ids[0]})).json()
+    )
+    assert todos["2205"] == Decimal("400000.00")
+    assert solo_p0["2205"] == Decimal("100000.00")
+
+    d = (
+        await client.get(
+            "/cuentas/2205/movimientos", params={"tercero_id": ids[1]}
+        )
+    ).json()
+    assert d["saldo_final"] == "300000.00"
+    assert all(m["tercero_id"] == ids[1] for m in d["movimientos"])
+    assert d["movimientos"][0]["tercero_nombre"] == "Prov 1"
+
+
 async def test_invariante_todos_los_asientos_cuadran(client):
     # Genera varios asientos de distinta procedencia.
     prov = await _proveedor(client)
@@ -163,6 +203,7 @@ async def test_invariante_todos_los_asientos_cuadran(client):
             "fecha": "2026-09-03",
             "descripcion": "Ajuste",
             "libro": "oficial",
+            "tercero_id": prov,
             "documento_soporte": "Recibo #1",
             "lineas": [
                 {"cuenta_codigo": "5195", "debito": "1000", "credito": "0"},

@@ -8,11 +8,15 @@ from __future__ import annotations
 import enum
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, DateTime, Enum, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
+
+if TYPE_CHECKING:
+    from app.features.terceros.models import Tercero
 
 
 class Naturaleza(str, enum.Enum):
@@ -70,6 +74,10 @@ class Asiento(Base):
         Enum(LibroContable), default=LibroContable.OFICIAL
     )
     documento_soporte: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Con qué actor externo se hizo la transacción. Ver docs/features/terceros/spec.md.
+    tercero_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tercero.id"), nullable=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
     )
@@ -81,6 +89,7 @@ class Asiento(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    tercero: Mapped[Tercero | None] = relationship(lazy="selectin")
 
     def cuadra(self) -> bool:
         """True si suma(débito) == suma(crédito) entre todas sus líneas.

@@ -77,7 +77,24 @@ const LIBRO_NOTA = {
 };
 
 // Estado compartido de los dos controles.
-const analisis = { libro: "oficial", anio: "", mes: "" };
+const analisis = { libro: "oficial", anio: "", mes: "", tercero_id: "" };
+
+// Lista de terceros, cacheada (la usan el selector de análisis y el de movimientos).
+let terceroCache = null;
+async function terceros() {
+  if (!terceroCache) terceroCache = await api("GET", "/terceros");
+  return terceroCache;
+}
+function invalidarTerceros() {
+  terceroCache = null;
+}
+function opcionesDeTerceros(lista, incluirTodos) {
+  const base = incluirTodos ? '<option value="">todos los actores</option>' : "";
+  return (
+    base +
+    lista.map((t) => `<option value="${t.id}">${t.nombre} (${t.tipo})</option>`).join("")
+  );
+}
 
 function rangoFechas() {
   if (!analisis.anio) return {};
@@ -95,10 +112,11 @@ function paramsAnalisis(paraAsientos = false) {
   const { desde, hasta } = rangoFechas();
   if (desde) p.set("desde", desde);
   if (hasta) p.set("hasta", hasta);
+  if (analisis.tercero_id) p.set("tercero_id", analisis.tercero_id);
   return p.toString();
 }
 
-function montarControles(contenedor, alCambiar) {
+async function montarControles(contenedor, alCambiar) {
   const anios = [];
   for (let y = ANIO_ACTUAL; y >= 2024; y--) anios.push(y);
   contenedor.innerHTML = `
@@ -121,6 +139,9 @@ function montarControles(contenedor, alCambiar) {
         </select>
       </div>
     </div>
+    <div class="campo">Actor
+      <select data-c="tercero_id">${opcionesDeTerceros(await terceros(), true)}</select>
+    </div>
     <p class="ctrl-nota"></p>`;
 
   contenedor._sync = () => {
@@ -130,6 +151,7 @@ function montarControles(contenedor, alCambiar) {
     $('[data-c="anio"]', contenedor).value = analisis.anio;
     $('[data-c="mes"]', contenedor).value = analisis.mes;
     $('[data-c="mes"]', contenedor).disabled = !analisis.anio;
+    $('[data-c="tercero_id"]', contenedor).value = analisis.tercero_id;
     $(".ctrl-nota", contenedor).textContent = LIBRO_NOTA[analisis.libro];
   };
   contenedor._sync();
@@ -218,7 +240,10 @@ $("#balance-arbol").addEventListener("click", async (e) => {
          </tr></thead><tbody>${d.movimientos
            .map(
              (m) => `<tr>
-             <td>${m.fecha}</td><td>${m.descripcion}</td>
+             <td>${m.fecha}</td>
+             <td>${m.descripcion}${
+               m.tercero_nombre ? ` <span class="cta-cod">· ${m.tercero_nombre}</span>` : ""
+             }</td>
              <td class="num">${Number(m.debito) ? money(m.debito) : ""}</td>
              <td class="num">${Number(m.credito) ? money(m.credito) : ""}</td>
              <td class="num${nn(m.saldo_acumulado)}">${money(m.saldo_acumulado)}</td>
@@ -252,10 +277,13 @@ function renderAsiento(a) {
   const soporte = a.documento_soporte
     ? `<span class="tag">${a.documento_soporte}</span>`
     : "";
+  const actor = a.tercero_nombre
+    ? `<span class="tag">con ${a.tercero_nombre}</span>`
+    : "";
   return `<div class="asiento">
     <div class="cab">
       <strong>#${a.id}</strong> <span>${a.fecha}</span> <span>${a.descripcion}</span>
-      <span class="tag">${a.origen}</span> <span class="tag">${a.libro}</span> ${soporte}
+      ${actor} <span class="tag">${a.origen}</span> <span class="tag">${a.libro}</span> ${soporte}
     </div>
     <table><tbody>${lineas}</tbody></table>
   </div>`;
@@ -287,6 +315,7 @@ $("#form-tercero").addEventListener("submit", async (e) => {
       enlace_rut: f.enlace_rut.value || null,
     });
     f.reset();
+    invalidarTerceros();
     await cargarTerceros();
   } catch (err) {
     mostrarError(err.message);
@@ -407,6 +436,7 @@ let cuentasCache = [];
 
 async function cargarMovimiento() {
   if (!cuentasCache.length) cuentasCache = await api("GET", "/cuentas");
+  $("#mov-tercero").innerHTML = opcionesDeTerceros(await terceros(), false);
   if (!$("#lineas-body").children.length) {
     agregarLinea();
     agregarLinea();
@@ -478,6 +508,7 @@ $("#form-movimiento").addEventListener("submit", async (e) => {
       fecha: f.fecha.value,
       descripcion: f.descripcion.value,
       libro: f.libro.value,
+      tercero_id: Number(f.tercero_id.value),
       documento_soporte: f.documento_soporte.value || null,
       lineas,
     });
@@ -503,7 +534,9 @@ const CARGADORES = {
   movimiento: cargarMovimiento,
 };
 
-montarControles($("#ctrl-balance"), cargarBalance);
-montarControles($("#ctrl-libro"), cargarLibro);
-
-mostrarTab(location.hash.replace("#/", "") || TAB_INICIAL);
+Promise.all([
+  montarControles($("#ctrl-balance"), cargarBalance),
+  montarControles($("#ctrl-libro"), cargarLibro),
+])
+  .catch((e) => mostrarError(e.message))
+  .finally(() => mostrarTab(location.hash.replace("#/", "") || TAB_INICIAL));

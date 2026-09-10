@@ -51,6 +51,10 @@
               <select name="tipo">
                 <option value="cliente">cliente</option>
                 <option value="proveedor">proveedor</option>
+                <option value="banco">banco</option>
+                <option value="empleado">empleado</option>
+                <option value="socio">socio (dueño)</option>
+                <option value="otro">otro</option>
               </select>
             </label>
           </div>
@@ -136,6 +140,9 @@
         <form id="form-movimiento" class="form">
           <div class="row">
             <label>Fecha <b class="req">*</b><input name="fecha" type="date" required></label>
+            <label>Con quién / actor <b class="req">*</b>
+              <select name="tercero_id" id="mov-tercero" required></select>
+            </label>
             <label>Libro <b class="req">*</b>
               <select name="libro" id="mov-libro">
                 <option value="oficial">oficial (exige soporte)</option>

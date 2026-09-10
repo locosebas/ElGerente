@@ -33,17 +33,19 @@ pagos, donde el asiento es automático).
 
 ## 3. Reglas de negocio
 
-1. **Mínimo 2 líneas.** Menos → `DatosInvalidos` (422).
-2. **Cada línea tiene débito o crédito distinto de cero** (no ambas en 0). Si no →
+1. **`tercero_id` obligatorio** — con qué actor externo se hizo (el banco, el socio, el
+   proveedor sin factura, etc.). Debe existir → si no, `NoEncontrado` (404).
+2. **Mínimo 2 líneas.** Menos → `DatosInvalidos` (422).
+3. **Cada línea tiene débito o crédito distinto de cero** (no ambas en 0). Si no →
    `DatosInvalidos` (422).
-3. **Las líneas deben cuadrar:** `suma(débitos) = suma(créditos)`. Se comprueba **antes** de
+4. **Las líneas deben cuadrar:** `suma(débitos) = suma(créditos)`. Se comprueba **antes** de
    guardar → `DatosInvalidos` (422). (En el núcleo esto es `AsientoDesbalanceado`; para
    movimientos manuales se expone como 422 porque es error del usuario, no del sistema.)
-4. **Toda `cuenta_codigo` debe existir** en el plan de cuentas → si no, `NoEncontrado` (404).
-5. **`libro = oficial` ⇒ `documento_soporte` obligatorio** (nulo o vacío → `DatosInvalidos`
+5. **Toda `cuenta_codigo` debe existir** en el plan de cuentas → si no, `NoEncontrado` (404).
+6. **`libro = oficial` ⇒ `documento_soporte` obligatorio** (nulo o vacío → `DatosInvalidos`
    422).
-6. **`libro = interna` ⇒ `documento_soporte` se ignora.**
-7. El asiento se crea con `origen = manual` y el `libro` indicado.
+7. **`libro = interna` ⇒ `documento_soporte` se ignora.**
+8. El asiento se crea con `origen = manual`, el `libro` indicado y el `tercero_id` dado.
 
 ### Sobre las consignaciones
 

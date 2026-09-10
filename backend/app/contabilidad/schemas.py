@@ -30,6 +30,8 @@ class AsientoOut(BaseModel):
     origen: OrigenAsiento
     libro: LibroContable
     documento_soporte: str | None
+    tercero_id: int | None
+    tercero_nombre: str | None
     created_at: datetime
     lineas: list[LineaAsientoOut]
 
@@ -48,6 +50,8 @@ class MovimientoCuentaOut(BaseModel):
     origen: OrigenAsiento
     libro: LibroContable
     documento_soporte: str | None
+    tercero_id: int | None
+    tercero_nombre: str | None
     debito: Decimal
     credito: Decimal
     saldo_acumulado: Decimal

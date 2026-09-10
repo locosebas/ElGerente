@@ -24,7 +24,7 @@ _`crear_asiento` — el único punto de escritura contable._
 _Cálculo del balance: saldo de cada cuenta, con filtro de libro y de periodo._
 
   - `class FiltroLibro` — 
-  - `def condiciones_asiento(libro, desde, hasta)` — Filtros a aplicar sobre `asiento` (libro + rango de fechas).
+  - `def condiciones_asiento(libro, desde, hasta, tercero_id)` — Filtros a aplicar sobre `asiento` (libro + rango de fechas + tercero).
   - `async def calcular_balance(session)` — Devuelve TODAS las cuentas del plan (incluso con saldo 0), ordenadas
 
   depende de: `app.contabilidad.models`, `app.core.errors`
@@ -37,7 +37,7 @@ _Extracto de una cuenta: sus movimientos con saldo acumulado._
 
   - `async def movimientos_de_cuenta(session, codigo)` — 
 
-  depende de: `app.contabilidad.balance`, `app.contabilidad.models`, `app.core.errors`
+  depende de: `app.contabilidad.balance`, `app.contabilidad.models`, `app.core.errors`, `app.features.terceros.models`
 
 ## `backend/app/contabilidad/models.py`
 _Modelos del núcleo contable — partida doble._
@@ -50,7 +50,7 @@ _Modelos del núcleo contable — partida doble._
   - `class Asiento` — 
   - `class LineaAsiento` — 
 
-  depende de: `app.core.db`
+  depende de: `app.core.db`, `app.features.terceros.models`
 
 ## `backend/app/contabilidad/plan_cuentas.py`
 _Plan de cuentas inicial y su siembra idempotente._
@@ -63,9 +63,9 @@ _Plan de cuentas inicial y su siembra idempotente._
 _Endpoints de solo lectura del núcleo contable._
 
   - `async def listar_cuentas(db)` — 
-  - `async def listar_asientos(libro, desde, hasta, db)` — 
-  - `async def obtener_balance(libro, desde, hasta, db)` — 
-  - `async def detalle_de_cuenta(codigo, libro, desde, hasta, db)` — 
+  - `async def listar_asientos(libro, desde, hasta, tercero_id, db)` — 
+  - `async def obtener_balance(libro, desde, hasta, tercero_id, db)` — 
+  - `async def detalle_de_cuenta(codigo, libro, desde, hasta, tercero_id, db)` — 
 
   depende de: `app.contabilidad.balance`, `app.contabilidad.detalle_cuenta`, `app.contabilidad.models`, `app.contabilidad.schemas`, `app.contabilidad.serializers`, `app.core.db`
 
@@ -218,7 +218,7 @@ _Lógica de movimientos manuales (asientos oficiales con soporte / internos)._
 
   - `async def registrar_movimiento_manual(session)` — 
 
-  depende de: `app.contabilidad.asientos`, `app.contabilidad.models`, `app.core.errors`, `app.core.logging`
+  depende de: `app.contabilidad.asientos`, `app.contabilidad.models`, `app.core.errors`, `app.core.logging`, `app.features.terceros.service`
 
 ## `backend/app/features/pagos/service.py`
 _Lógica de pago/cobro de facturas. Ver docs/features/pagos/spec.md §3._

@@ -75,6 +75,15 @@ async def poblar() -> None:  # noqa: PLR0915 — es un guion lineal, se lee de a
         cli_hotel = await crear_tercero(
             s, nombre="Hotel Mirador", nit_cedula="811222333", tipo=TipoTercero.CLIENTE
         )
+        banco_bogota = await crear_tercero(
+            s, nombre="Banco de Bogotá", nit_cedula="860002964", tipo=TipoTercero.BANCO
+        )
+        banco_occidente = await crear_tercero(
+            s, nombre="Banco de Occidente", nit_cedula="890300279", tipo=TipoTercero.BANCO
+        )
+        el_dueno = await crear_tercero(
+            s, nombre="El dueño", nit_cedula="1090111222", tipo=TipoTercero.SOCIO
+        )
 
         print("Aporte inicial del dueño (movimiento oficial)...")
         await registrar_movimiento_manual(
@@ -82,6 +91,7 @@ async def poblar() -> None:  # noqa: PLR0915 — es un guion lineal, se lee de a
             fecha=date(2026, 6, 1),
             descripcion="Aporte de capital del dueño para arrancar",
             libro=LibroContable.OFICIAL,
+            tercero_id=el_dueno.id,
             documento_soporte="Consignación #001",
             lineas=[
                 {"cuenta_codigo": "1110", "debito": "20000000", "credito": "0"},
@@ -138,18 +148,25 @@ async def poblar() -> None:  # noqa: PLR0915 — es un guion lineal, se lee de a
                 await pagar_factura(s, factura_id=f.id, medio_pago=medio, fecha=fecha)
 
         print("Movimientos internos (para-contabilidad)...")
+        empleado_ambulante = await crear_tercero(
+            s, nombre="Vendedor ambulante (mercancía)", nit_cedula="0", tipo=TipoTercero.OTRO
+        )
+        empleado = await crear_tercero(
+            s, nombre="Carlos (ayudante)", nit_cedula="1088777666", tipo=TipoTercero.EMPLEADO
+        )
         internos = [
-            (date(2026, 6, 30), "El dueño retira efectivo para gastos personales", "2905", "1105", "800000"),
-            (date(2026, 7, 18), "Compra de mercancía sin factura a un vendedor ambulante", "5905", "1105", "350000"),
-            (date(2026, 7, 31), "Retiro del dueño", "2905", "1110", "1500000"),
-            (date(2026, 8, 15), "Propina/ayuda a un empleado, sin soporte", "5905", "1105", "120000"),
+            (date(2026, 6, 30), "El dueño retira efectivo para gastos personales", "2905", "1105", "800000", el_dueno),
+            (date(2026, 7, 18), "Compra de mercancía sin factura", "5905", "1105", "350000", empleado_ambulante),
+            (date(2026, 7, 31), "Retiro del dueño", "2905", "1110", "1500000", el_dueno),
+            (date(2026, 8, 15), "Ayuda a un empleado, sin soporte", "5905", "1105", "120000", empleado),
         ]
-        for fecha, desc, cta_debito, cta_credito, monto in internos:
+        for fecha, desc, cta_debito, cta_credito, monto, actor in internos:
             await registrar_movimiento_manual(
                 s,
                 fecha=fecha,
                 descripcion=desc,
                 libro=LibroContable.INTERNA,
+                tercero_id=actor.id,
                 documento_soporte=None,
                 lineas=[
                     {"cuenta_codigo": cta_debito, "debito": monto, "credito": "0"},
@@ -161,12 +178,25 @@ async def poblar() -> None:  # noqa: PLR0915 — es un guion lineal, se lee de a
         await registrar_movimiento_manual(
             s,
             fecha=date(2026, 7, 1),
-            descripcion="Traslado de efectivo de caja a bancos",
+            descripcion="Consignación de efectivo de caja al Banco de Bogotá",
             libro=LibroContable.OFICIAL,
+            tercero_id=banco_bogota.id,
             documento_soporte="Consignación #044",
             lineas=[
                 {"cuenta_codigo": "1110", "debito": "1000000", "credito": "0"},
                 {"cuenta_codigo": "1105", "debito": "0", "credito": "1000000"},
+            ],
+        )
+        await registrar_movimiento_manual(
+            s,
+            fecha=date(2026, 8, 5),
+            descripcion="Préstamo recibido del Banco de Occidente",
+            libro=LibroContable.OFICIAL,
+            tercero_id=banco_occidente.id,
+            documento_soporte="Pagaré 00812",
+            lineas=[
+                {"cuenta_codigo": "1110", "debito": "5000000", "credito": "0"},
+                {"cuenta_codigo": "2105", "debito": "0", "credito": "5000000"},
             ],
         )
 

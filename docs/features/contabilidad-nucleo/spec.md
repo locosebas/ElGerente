@@ -47,10 +47,10 @@ por aquí** (`crear_asiento`).
 6. **Signo del saldo según la naturaleza de la cuenta:**
    - naturaleza **deudora** (activo, gasto): `saldo = débitos − créditos`;
    - naturaleza **acreedora** (pasivo, patrimonio, ingreso): `saldo = créditos − débitos`.
-7. **El balance por defecto solo suma `libro = oficial`.** `incluir_interna=true` devuelve
-   el combinado (oficial + interno).
-8. **Sin filtro por periodo en v1.** El balance es el acumulado histórico completo.
-9. **El plan de cuentas se siembra una sola vez.** `sembrar_plan_de_cuentas` es
+7. **El balance por defecto solo suma `libro = oficial`.** El endpoint acepta
+   `libro=oficial|interna|todos` y filtros de periodo (`desde`/`hasta`) y de `tercero_id` —
+   ver [`../balance/spec.md`](../balance/spec.md).
+8. **El plan de cuentas se siembra una sola vez.** `sembrar_plan_de_cuentas` es
    idempotente: si `cuenta` ya tiene filas, no hace nada.
 
 ## 4. Modelo de datos
@@ -75,6 +75,7 @@ Propiedad derivada (no es columna) `naturaleza` → `"deudora"` para `activo`/`g
 | `fecha` | date | fecha del hecho económico; la aporta quien registra, no es `now()` |
 | `descripcion` | text | |
 | `origen` | enum `OrigenAsiento` | `factura` \| `contrato` \| `manual` — de qué feature nació |
+| `tercero_id` | FK → `tercero.id`, nullable | **con qué actor externo se hizo la transacción**. Lo pone la feature: factura/pago → el cliente/proveedor de la factura; movimiento manual → obligatorio en el formulario. Nullable en la tabla por compatibilidad, pero el flujo siempre lo exige |
 | `libro` | enum `LibroContable` | `oficial` \| `interna`; por defecto `oficial` |
 | `documento_soporte` | str(255), nullable | obligatorio si `libro = oficial` (regla 3) |
 | `created_at` | datetime | `utcnow` al crear (auditoría; distinto de `fecha`) |
@@ -102,6 +103,7 @@ Relación: `asiento.lineas` → lista de `linea_asiento`, con `cascade="all, del
 | 1105 | Caja | activo | efectivo |
 | 1110 | Bancos | activo | transferencias / consignaciones |
 | 1305 | Cuentas por cobrar | activo | facturas emitidas pendientes de cobro |
+| 2105 | Obligaciones financieras | pasivo | deudas / préstamos con bancos |
 | 2205 | Cuentas por pagar | pasivo | facturas recibidas pendientes de pago |
 | 2408 | Impuestos por pagar - IVA | pasivo | IVA neteado (ver §8) |
 | 2905 | Cuentas con el dueño | pasivo | puente dueño ↔ empresa (libro interno); puede quedar negativo |
@@ -114,30 +116,19 @@ Relación: `asiento.lineas` → lista de `linea_asiento`, con `cascade="all, del
 
 ```
 crear_asiento(session, *, fecha, descripcion, origen, lineas,
-              libro=OFICIAL, documento_soporte=None) -> Asiento
+              libro=OFICIAL, documento_soporte=None, tercero_id=None) -> Asiento
 ```
 Orden: (1) valida documento de soporte si es oficial → `DocumentoSoporteRequerido`;
-(2) arma el asiento en memoria; (3) valida cuadre → `AsientoDesbalanceado`;
+(2) arma el asiento en memoria (con `tercero_id`); (3) valida cuadre → `AsientoDesbalanceado`;
 (4) `session.add` + `session.flush()`.
 
 ```
-calcular_balance(session, *, incluir_interna=False) -> list[SaldoCuenta]
+calcular_balance(session, *, libro=OFICIAL, desde=None, hasta=None, tercero_id=None)
 ```
-Una sola consulta de agregación:
-
-```sql
-SELECT c.codigo, c.nombre, c.tipo,
-       COALESCE(SUM(l.debito), 0)  AS td,
-       COALESCE(SUM(l.credito), 0) AS tc
-FROM cuenta c
-LEFT JOIN linea_asiento l ON l.cuenta_id = c.id
-LEFT JOIN asiento a       ON a.id = l.asiento_id
-WHERE :incluir_interna = 1 OR a.libro = 'oficial' OR a.id IS NULL
-GROUP BY c.id
-ORDER BY c.codigo
-```
-Luego, en Python, aplica el signo de la regla 6. Devuelve **todas** las cuentas, incluidas
-las de saldo 0.
+Una sola consulta de agregación. Los filtros van en el **ON** de un LEFT JOIN a `asiento`
+(no en el WHERE) para que las cuentas sin movimientos sigan apareciendo con saldo 0. Luego,
+en Python, aplica el signo de la regla 6. Detalle completo en
+[`../balance/spec.md`](../balance/spec.md).
 
 ```
 sembrar_plan_de_cuentas(session) -> None      # idempotente
@@ -148,8 +139,9 @@ sembrar_plan_de_cuentas(session) -> None      # idempotente
 | Método | Ruta | Query | Respuesta |
 |---|---|---|---|
 | `GET` | `/cuentas` | — | plan de cuentas ordenado por `codigo` (`CuentaOut[]`) |
-| `GET` | `/asientos` | `libro` opcional (`oficial`\|`interna`) | `AsientoOut[]`: cada asiento con sus líneas; cada línea trae `cuenta_codigo` y `cuenta_nombre` |
-| `GET` | `/balance` | `incluir_interna` bool (default `false`) | `SaldoCuenta[]`: `cuenta_codigo`, `cuenta_nombre`, `tipo`, `saldo` |
+| `GET` | `/asientos` | `libro`, `desde`, `hasta`, `tercero_id` (todos opcionales) | `AsientoOut[]`: cada asiento con sus líneas (`cuenta_codigo`/`cuenta_nombre`) y su `tercero_id`/`tercero_nombre` |
+| `GET` | `/balance` | `libro` (`oficial`\|`interna`\|`todos`), `desde`, `hasta`, `tercero_id` | `SaldoCuenta[]` |
+| `GET` | `/cuentas/{codigo}/movimientos` | idem `/balance` | extracto de la cuenta con saldo acumulado (ver `balance/spec.md`) |
 
 La consulta de `/asientos` usa `selectinload(Asiento.lineas).selectinload(LineaAsiento.cuenta)`
 para no disparar carga perezosa (async).
@@ -176,7 +168,7 @@ para no disparar carga perezosa (async).
 | `test_balance_incluye_cuentas_sin_movimiento` | unit | una cuenta sin líneas aparece con saldo 0 | `tests/unit/contabilidad/test_balance.py` |
 | `test_balance_ignora_interna_por_defecto` | unit | asiento interno no afecta; con `incluir_interna=True` sí | `tests/unit/contabilidad/test_balance.py` |
 | `test_seed_es_idempotente` | unit | sembrar dos veces no duplica cuentas | `tests/unit/contabilidad/test_plan_cuentas.py` |
-| `test_get_cuentas_devuelve_plan_completo` | integración | `GET /cuentas` → 10 cuentas, ordenadas por código | `tests/integration/test_contabilidad.py` |
+| `test_get_cuentas_devuelve_plan_completo` | integración | `GET /cuentas` → 11 cuentas, ordenadas por código | `tests/integration/test_contabilidad.py` |
 | `test_get_asientos_filtra_por_libro` | integración | `GET /asientos?libro=interna` tras un movimiento interno → solo ese | `tests/integration/test_contabilidad.py` |
 | `test_get_balance_vs_incluir_interna` | integración | los dos balances difieren exactamente en el monto interno registrado | `tests/integration/test_contabilidad.py` |
 | `test_invariante_todos_los_asientos_cuadran` | integración | tras toda la suite, cada asiento de `GET /asientos` cuadra línea a línea | `tests/integration/test_contabilidad.py` |

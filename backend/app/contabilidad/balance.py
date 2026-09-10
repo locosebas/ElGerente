@@ -29,9 +29,12 @@ class FiltroLibro(str, enum.Enum):
 
 
 def condiciones_asiento(
-    libro: FiltroLibro, desde: date | None, hasta: date | None
+    libro: FiltroLibro,
+    desde: date | None,
+    hasta: date | None,
+    tercero_id: int | None = None,
 ) -> list:
-    """Filtros a aplicar sobre `asiento` (libro + rango de fechas).
+    """Filtros a aplicar sobre `asiento` (libro + rango de fechas + tercero).
 
     Se usan en el ON de un LEFT JOIN, no en el WHERE, para que las cuentas
     sin movimientos que cumplan el filtro sigan apareciendo con saldo 0.
@@ -47,6 +50,8 @@ def condiciones_asiento(
         cond.append(Asiento.fecha >= desde)
     if hasta is not None:
         cond.append(Asiento.fecha <= hasta)
+    if tercero_id is not None:
+        cond.append(Asiento.tercero_id == tercero_id)
     return cond
 
 
@@ -62,11 +67,12 @@ async def calcular_balance(
     libro: FiltroLibro = FiltroLibro.OFICIAL,
     desde: date | None = None,
     hasta: date | None = None,
+    tercero_id: int | None = None,
 ) -> list[dict]:
     """Devuelve TODAS las cuentas del plan (incluso con saldo 0), ordenadas
     por código, con su saldo según la naturaleza de la cuenta y los filtros.
     """
-    cond = condiciones_asiento(libro, desde, hasta)
+    cond = condiciones_asiento(libro, desde, hasta, tercero_id)
     incluye = Asiento.id.isnot(None)  # el asiento pasó el filtro del JOIN
     monto_debito = case((incluye, LineaAsiento.debito), else_=0)
     monto_credito = case((incluye, LineaAsiento.credito), else_=0)

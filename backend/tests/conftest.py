@@ -16,6 +16,8 @@ from sqlalchemy.pool import StaticPool
 import app.models  # noqa: F401  (registra todas las tablas en Base.metadata)
 from app.contabilidad.plan_cuentas import sembrar_plan_de_cuentas
 from app.core.db import Base, get_db
+from app.features.terceros.models import TipoTercero
+from app.features.terceros.service import crear_tercero
 from app.main import create_app
 
 
@@ -49,6 +51,15 @@ async def db_session(session_factory) -> AsyncGenerator[AsyncSession, None]:
     """Sesión para los tests unitarios que llaman a los servicios directo."""
     async with session_factory() as session:
         yield session
+
+
+@pytest_asyncio.fixture
+async def tercero_id(db_session) -> int:
+    """Un tercero cualquiera, para los tests que necesitan un actor externo."""
+    t = await crear_tercero(
+        db_session, nombre="Actor Test", nit_cedula="1", tipo=TipoTercero.OTRO
+    )
+    return t.id
 
 
 @pytest_asyncio.fixture

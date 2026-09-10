@@ -59,7 +59,7 @@ datos.
 | Momento | Nivel | Ejemplo |
 |---|---|---|
 | Arranque | `INFO` | `El Gerente arrancando — entorno=prod  base_de_datos=postgresql+asyncpg://elgerente:***@db:5432/elgerente` |
-| Arranque | `INFO` / `WARNING` | `Plan de cuentas: 10 cuentas` · o `El plan de cuentas está vacío. Correr: python -m app.seed` |
+| Arranque | `INFO` / `WARNING` | `Plan de cuentas: 11 cuentas` · o `El plan de cuentas está vacío. Correr: python -m app.seed` |
 | Cada petición | `INFO` | `POST /facturas -> 200 (18 ms)` |
 | Cada petición 5xx | `WARNING` | `GET /balance -> 500 (11 ms)` |
 | Hecho de negocio | `INFO` | `Factura F-001 registrada — #3 tipo=recibida tercero=1 total=595000.00` |
