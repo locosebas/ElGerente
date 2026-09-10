@@ -98,6 +98,7 @@ backend/
     unit/                   34 tests — reglas de negocio, servicios llamados directo
     integration/            32 tests — app real vía httpx.AsyncClient + SQLite temporal
 
+  scripts/seed_demo.py      carga un negocio inventado para ver la interfaz con datos
 scripts/generar_mapa.py     regenera docs/_generado/indice-codigo.md
 docker-compose.yml          app + PostgreSQL para probar en local
 .env.docker.example
@@ -154,8 +155,8 @@ cp .env.example .env
 .venv/bin/python -m pytest -q            # -> 66 passed
 .venv/bin/ruff check .                   # -> All checks passed
 
-.venv/bin/alembic upgrade head
-.venv/bin/python -m app.seed
+.venv/bin/python scripts/reset_db.py     # crea las tablas + siembra el plan de cuentas
+.venv/bin/python scripts/seed_demo.py    # (opcional) carga un negocio inventado para ver la interfaz con datos
 .venv/bin/uvicorn app.main:app --reload  # http://localhost:8000/  (interfaz)  y  /docs (API)
 ```
 
@@ -184,15 +185,19 @@ Detalle en [`arquitectura/despliegue.md`](arquitectura/despliegue.md).
 | Proveedor de WhatsApp (Meta vs Twilio) | Sin decidir — se construye contra una interfaz con adaptador `Fake` |
 | Documentación | `docs/features/<feature>/`; `analysis/` queda como historial |
 | Forma de trabajo | Por feature: spec → código → tests, en ese orden |
+| **Prioridad del producto (2026-09-09)** | **Registrar movimientos de plata es lo principal.** Facturas, contratos y balance son "análisis avanzado". La interfaz abre en la pantalla de movimientos; el Módulo 2 (WhatsApp) debe priorizar el registro de entradas/salidas. |
 
 ---
 
 ## Lo próximo
 
-1. **Probar el Módulo 1 con clientes de verdad.** Montarlo en local (interfaz en `/`),
-   registrar datos reales unos días, y anotar lo que falte o incomode.
-2. Con eso, cerrar los huecos que aparezcan (validaciones, campos, textos).
-3. Recién entonces, **Etapa 3**: documentar el Módulo 2 (WhatsApp) y construirlo.
+1. **Probar el Módulo 1 con clientes de verdad.** Montarlo en local (interfaz en `/`,
+   ya con datos demo), registrar datos reales unos días, y anotar lo que falte o incomode.
+2. **Decidir la entrada simplificada de movimientos**: hoy la pantalla pide cuenta + débito
+   + crédito por línea. Para el uso diario (y para WhatsApp) hace falta un "entró/salió
+   plata" que elija las cuentas solo. Definir los tipos de movimiento y sus cuentas.
+3. Con eso, cerrar el resto de huecos que aparezcan (validaciones, campos, textos).
+4. Recién entonces, **Etapa 3**: documentar el Módulo 2 (WhatsApp) y construirlo.
    Recordatorio: el chatbot es **100 % determinístico**.
 
 ### Pendiente conocido antes de exponerlo fuera de una red de confianza

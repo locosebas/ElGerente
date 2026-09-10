@@ -46,10 +46,11 @@ function celdaSaldo(v) {
 
 // --- Navegación por pestañas ----------------------------------------------
 
-const TABS = ["balance", "libro", "terceros", "facturas", "contratos", "movimiento"];
+const TABS = ["movimiento", "facturas", "contratos", "terceros", "balance", "libro"];
+const TAB_INICIAL = "movimiento";
 
 function mostrarTab(nombre) {
-  const tab = TABS.includes(nombre) ? nombre : "balance";
+  const tab = TABS.includes(nombre) ? nombre : TAB_INICIAL;
   TABS.forEach((t) => {
     $(`#tab-${t}`).hidden = t !== tab;
   });
@@ -348,4 +349,4 @@ const CARGADORES = {
   movimiento: cargarMovimiento,
 };
 
-mostrarTab(location.hash.replace("#/", "") || "balance");
+mostrarTab(location.hash.replace("#/", "") || TAB_INICIAL);

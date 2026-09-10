@@ -37,6 +37,8 @@ body { margin: 0; background: var(--bg); color: var(--ink); }
 }
 .logo { font-size: 18px; margin: 0 0 18px; }
 .sidebar nav { display: flex; flex-direction: column; gap: 2px; }
+.nav-grupo { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 12px 10px 2px; }
+.nav-grupo:first-child { margin-top: 0; }
 .sidebar nav a {
   padding: 8px 10px; border-radius: 6px; text-decoration: none;
   color: var(--ink); font-size: 14px;

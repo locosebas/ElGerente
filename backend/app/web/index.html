@@ -11,12 +11,14 @@
     <aside class="sidebar">
       <h1 class="logo">El&nbsp;Gerente</h1>
       <nav>
-        <a href="#/balance" data-tab="balance">Balance</a>
-        <a href="#/libro" data-tab="libro">Libro diario</a>
-        <a href="#/terceros" data-tab="terceros">Terceros</a>
+        <span class="nav-grupo">Registrar</span>
+        <a href="#/movimiento" data-tab="movimiento">Movimientos</a>
         <a href="#/facturas" data-tab="facturas">Facturas</a>
         <a href="#/contratos" data-tab="contratos">Contratos</a>
-        <a href="#/movimiento" data-tab="movimiento">Movimiento manual</a>
+        <a href="#/terceros" data-tab="terceros">Terceros</a>
+        <span class="nav-grupo">Analizar</span>
+        <a href="#/balance" data-tab="balance">Balance</a>
+        <a href="#/libro" data-tab="libro">Libro diario</a>
       </nav>
       <p class="hint">Módulo 1 — motor contable</p>
     </aside>
@@ -127,10 +129,12 @@
         </table>
       </section>
 
-      <!-- Movimiento manual -->
+      <!-- Movimientos -->
       <section id="tab-movimiento" class="tab" hidden>
-        <h2>Movimiento manual</h2>
-        <p class="hint">Asiento de partida doble. La suma de débitos tiene que igualar la de créditos.</p>
+        <h2>Registrar movimiento</h2>
+        <p class="hint">Entrada o salida de plata que no viene de una factura (retiros, aportes,
+          gastos sin factura, traslados de caja a bancos...). Asiento de partida doble: la suma de
+          débitos tiene que igualar la de créditos.</p>
         <form id="form-movimiento" class="form">
           <div class="row">
             <label>Fecha <input name="fecha" type="date" required></label>

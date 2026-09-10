@@ -18,8 +18,9 @@ conversación de WhatsApp sin Meta.
   framework con tooling: un `index.html` + `app.js` (JavaScript plano, `fetch`) +
   `styles.css`.
 - Consume **la misma API REST** ya probada. **No añade lógica de negocio.**
-- Pantallas: Balance, Libro diario, Terceros, Facturas (con acción "pagar/cobrar"),
-  Contratos, Movimiento manual.
+- Pantallas en dos grupos: **Registrar** (Movimientos, Facturas, Contratos, Terceros) y
+  **Analizar** (Balance, Libro diario). El registro de movimientos es lo principal y es la
+  pantalla que abre por defecto; el resto es análisis.
 
 **No incluye ahora:**
 - Pestaña "Simulador WhatsApp" (se agrega en la etapa del Módulo 2).
@@ -84,5 +85,12 @@ No crea tablas.
 - **Sin build ni framework**: coherente con "cero infraestructura" y con que el dueño pueda
   leer el código. Si la interfaz crece mucho, se reevalúa.
 - La pestaña "Simulador WhatsApp" se documenta y agrega junto con el Módulo 2.
-- Opcional: publicar un mockup estático de estas pantallas como Artifact para revisar el
-  diseño visual antes de cablearlo — no bloquea.
+- **Dirección del producto (dueño, 2026-09-09):** registrar movimientos de plata es lo
+  principal; facturas, contratos y balance son "análisis avanzado". La pantalla de
+  movimientos abre por defecto. **Pendiente por decidir:** una entrada simplificada de
+  "entró/salió plata" que no obligue a elegir cuentas ni pensar en débito/crédito (el
+  sistema elegiría las cuentas por el tipo de movimiento). Hoy la pantalla de movimientos
+  todavía pide cuenta + débito + crédito por línea.
+- **Datos de demostración:** `backend/scripts/seed_demo.py` carga un negocio inventado
+  (terceros, ~14 facturas, movimientos internos/oficiales, contratos) para ver la interfaz
+  con contenido. No es para producción.
