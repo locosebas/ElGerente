@@ -22,7 +22,11 @@ def main() -> None:
         print(f"Borrado {db.name}")
 
     print("alembic upgrade head ...")
-    subprocess.run(["alembic", "upgrade", "head"], cwd=BACKEND, check=True)
+    # `python -m alembic` en vez de `alembic` a secas: funciona aunque el bin
+    # del entorno virtual no esté en el PATH.
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"], cwd=BACKEND, check=True
+    )
 
     sys.path.insert(0, str(BACKEND))
     from app.seed import seed

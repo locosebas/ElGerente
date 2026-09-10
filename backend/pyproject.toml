@@ -54,3 +54,5 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Migraciones: código generado por Alembic, se revisa a mano pero no se reformatea.
 "alembic/versions/*" = ["E501"]
+# Guiones con tablas de datos: se leen mejor sin cortar las filas.
+"scripts/seed_demo.py" = ["E501"]
