@@ -11,12 +11,20 @@ documentación viva: si el código cambia, esto cambia con él.
 
 | Carpeta | Qué contiene |
 |---|---|
-| [`arquitectura/`](arquitectura/) | Las decisiones técnicas transversales: capas, por qué async, base de datos y migraciones, testing, resiliencia y logs, despliegue con Docker |
+| [`arquitectura/`](arquitectura/) | Decisiones técnicas transversales + la [vista general HTML](arquitectura/vista-general.html): capas, por qué async, base de datos, testing, resiliencia, despliegue |
 | [`aprendizaje/`](aprendizaje/) | "Submódulos de aprendizaje": explicaciones en lenguaje simple de cada concepto o herramienta *antes* de usarla, para que el dueño pueda auditar el trabajo |
 | [`features/`](features/) | Una carpeta por **feature** (parte funcional del programa), cada una con su `spec.md`. Más el [índice](features/README.md) y el [catálogo de pruebas](features/pruebas.md) |
 
-**➡ [`ESTADO.md`](ESTADO.md) — qué está hecho y qué falta, de un vistazo.**
-**➡ [`MAPA.md`](MAPA.md) — navegación del código para mantenimiento (qué archivo tocar para cada cambio).**
+## Los cuatro documentos de arranque
+
+| Documento | Para qué |
+|---|---|
+| **[`ESTADO.md`](ESTADO.md)** | Qué está hecho y qué falta, cómo correr y probar. Lo primero a leer. |
+| **[`MAPA.md`](MAPA.md)** | "Quiero cambiar X → qué archivo y qué símbolo tocar" + reglas de arquitectura + grafo de dependencias. |
+| **[`TAREAS.md`](TAREAS.md)** | Backlog priorizado; cada tarea sirve como un chat / un agente. |
+| **[`PARA-NUEVO-CHAT.md`](PARA-NUEVO-CHAT.md)** | Prompts de arranque, cómo dividir el trabajo en varios chats sin pisarse, checklist de cierre. |
+
+Y la arquitectura de un vistazo: [`arquitectura/vista-general.html`](arquitectura/vista-general.html).
 
 ## Regla de trabajo: plan → documentación → código
 
@@ -29,10 +37,9 @@ Para cada feature, en este orden y sin saltarse pasos:
 
 ## Estado general
 
-- **Módulo 1 — motor contable**: ✅ completo, arquitectura por features, 56 tests en verde
-  (ver [`features/README.md`](features/README.md)).
+- **Módulo 1 — motor contable** + interfaz gráfica + endurecimiento: ✅ completo, 90 tests
+  en verde (ver [`ESTADO.md`](ESTADO.md) y [`features/README.md`](features/README.md)).
 - **Módulo 2 — WhatsApp**: ⬜ pendiente (chatbot 100 % determinístico — ver
-  [`aprendizaje/deterministico-vs-ia.md`](aprendizaje/deterministico-vs-ia.md)).
-- **Interfaz gráfica HTML**: ⬜ pendiente.
+  [`aprendizaje/deterministico-vs-ia.md`](aprendizaje/deterministico-vs-ia.md) y `TAREAS.md`).
 - El roadmap completo de módulos está en
   [`../analysis/01-features/roadmap-modulos.md`](../analysis/01-features/roadmap-modulos.md).

@@ -116,7 +116,7 @@ function paramsAnalisis(paraAsientos = false) {
   return p.toString();
 }
 
-async function montarControles(contenedor, alCambiar) {
+function montarControles(contenedor, alCambiar) {
   const anios = [];
   for (let y = ANIO_ACTUAL; y >= 2024; y--) anios.push(y);
   contenedor.innerHTML = `
@@ -140,9 +140,18 @@ async function montarControles(contenedor, alCambiar) {
       </div>
     </div>
     <div class="campo">Actor
-      <select data-c="tercero_id">${opcionesDeTerceros(await terceros(), true)}</select>
+      <select data-c="tercero_id"><option value="">todos los actores</option></select>
     </div>
     <p class="ctrl-nota"></p>`;
+
+  // El selector de actores se llena aparte: si /terceros falla, los demás
+  // controles siguen funcionando.
+  terceros()
+    .then((lista) => {
+      $('[data-c="tercero_id"]', contenedor).innerHTML = opcionesDeTerceros(lista, true);
+      $('[data-c="tercero_id"]', contenedor).value = analisis.tercero_id;
+    })
+    .catch(() => {});
 
   contenedor._sync = () => {
     $$('.segmento[data-grupo="libro"] button', contenedor).forEach((b) =>
@@ -534,9 +543,7 @@ const CARGADORES = {
   movimiento: cargarMovimiento,
 };
 
-Promise.all([
-  montarControles($("#ctrl-balance"), cargarBalance),
-  montarControles($("#ctrl-libro"), cargarLibro),
-])
-  .catch((e) => mostrarError(e.message))
-  .finally(() => mostrarTab(location.hash.replace("#/", "") || TAB_INICIAL));
+montarControles($("#ctrl-balance"), cargarBalance);
+montarControles($("#ctrl-libro"), cargarLibro);
+
+mostrarTab(location.hash.replace("#/", "") || TAB_INICIAL);

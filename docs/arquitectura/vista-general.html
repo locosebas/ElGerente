@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitectura de El Gerente</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper: #fbfaf7;
+    --surface: #ffffff;
+    --raised: #f3f1ec;
+    --ink: #1f242c;
+    --ink-soft: #5b626d;
+    --line: #e4e0d7;
+    --accent: #2f5fd0;
+    --accent-soft: #e7edfb;
+    --ok: #1e7a44;
+    --pend: #9a6a12;
+    --debito: #b4532a;
+    --credito: #2f6d54;
+    --diagram-bg: #faf8f3;
+    --diagram-ink: #2a2f38;
+    --diagram-line: #cfc9bc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14161a;
+      --surface: #1b1e23;
+      --raised: #23262c;
+      --ink: #e7e5df;
+      --ink-soft: #a1a6af;
+      --line: #313640;
+      --accent: #6f97ff;
+      --accent-soft: #1e2634;
+      --ok: #5fd08a;
+      --pend: #d9ac5c;
+      --debito: #e0916e;
+      --credito: #74c9a5;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14161a;
+    --surface: #1b1e23;
+    --raised: #23262c;
+    --ink: #e7e5df;
+    --ink-soft: #a1a6af;
+    --line: #313640;
+    --accent: #6f97ff;
+    --accent-soft: #1e2634;
+    --ok: #5fd08a;
+    --pend: #d9ac5c;
+    --debito: #e0916e;
+    --credito: #74c9a5;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    line-height: 1.62; font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .layout { display: grid; grid-template-columns: 1fr; gap: 0; }
+  @media (min-width: 1000px) {
+    .layout { grid-template-columns: 210px minmax(0, 720px); gap: 56px; justify-content: center; }
+    .toc { display: block; }
+  }
+
+  /* --- masthead --- */
+  header.mast { border-bottom: 2px solid var(--ink); padding: 52px 0 26px; margin-bottom: 8px; }
+  .kicker {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 14px;
+  }
+  h1 {
+    font-family: "Spectral", Georgia, serif; font-weight: 600;
+    font-size: clamp(2.1rem, 5vw, 3.1rem); line-height: 1.08; margin: 0 0 16px;
+    text-wrap: balance; letter-spacing: -0.01em;
+  }
+  .standfirst { font-size: 1.12rem; color: var(--ink-soft); max-width: 60ch; margin: 0 0 22px; }
+  .statusline {
+    display: flex; flex-wrap: wrap; gap: 8px; font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+  }
+  .chip {
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px;
+    background: var(--surface); color: var(--ink-soft);
+  }
+  .chip.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+
+  /* --- toc --- */
+  .toc { display: none; position: sticky; top: 28px; align-self: start; padding-top: 60px; }
+  .toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
+  .toc li { margin: 0; }
+  .toc a {
+    display: block; padding: 5px 0 5px 14px; margin-left: -2px; border-left: 2px solid transparent;
+    color: var(--ink-soft); text-decoration: none; font-size: 13.5px;
+  }
+  .toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+
+  main { padding-bottom: 90px; }
+  section { padding: 40px 0; border-bottom: 1px solid var(--line); }
+  section:last-child { border-bottom: none; }
+  h2 {
+    font-family: "Spectral", Georgia, serif; font-weight: 600; font-size: 1.7rem;
+    margin: 0 0 4px; letter-spacing: -0.01em;
+  }
+  h2 .num {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; color: var(--accent);
+    font-weight: 500; margin-right: 12px; vertical-align: 3px;
+  }
+  h3 { font-size: 1.02rem; font-weight: 600; margin: 30px 0 8px; }
+  p { margin: 0 0 16px; }
+  a { color: var(--accent); }
+  strong { font-weight: 600; }
+  code, .mono {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.86em;
+    background: var(--raised); padding: 1.5px 5px; border-radius: 4px;
+  }
+  ul.plain { margin: 0 0 16px; padding-left: 20px; }
+  ul.plain li { margin: 4px 0; }
+
+  .lede { font-size: 1.05rem; color: var(--ink-soft); margin-bottom: 24px; }
+
+  /* --- layer diagram --- */
+  .layers { display: flex; flex-direction: column; gap: 0; margin: 24px 0; }
+  .layer {
+    border: 1px solid var(--line); border-bottom-width: 0; background: var(--surface);
+    padding: 16px 18px; position: relative;
+  }
+  .layer:last-child { border-bottom-width: 1px; }
+  .layer:first-child { border-radius: 8px 8px 0 0; }
+  .layer:last-child { border-radius: 0 0 8px 8px; }
+  .layer .lname {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
+  }
+  .layer .ldesc { font-size: 0.92rem; }
+  .layer .lpath { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; color: var(--ink-soft); }
+  .layer .lno { color: var(--debito); }
+  .flowdown { text-align: center; color: var(--ink-soft); font-size: 18px; line-height: 1; padding: 3px 0; }
+
+  /* --- diagram / mermaid box --- */
+  .diagram {
+    background: var(--diagram-bg); border: 1px solid var(--diagram-line); border-radius: 10px;
+    padding: 18px; margin: 22px 0; overflow-x: auto;
+  }
+  .diagram pre.mermaid { margin: 0; background: transparent; text-align: center; }
+  .caption { font-size: 12.5px; color: var(--ink-soft); margin-top: 10px; font-style: italic; }
+
+  /* --- steps --- */
+  ol.steps { counter-reset: s; list-style: none; margin: 20px 0; padding: 0; }
+  ol.steps li {
+    counter-increment: s; position: relative; padding: 0 0 16px 46px; margin: 0;
+    border-left: 2px solid var(--line);
+  }
+  ol.steps li:last-child { border-left-color: transparent; padding-bottom: 0; }
+  ol.steps li::before {
+    content: counter(s); position: absolute; left: -15px; top: -2px;
+    width: 28px; height: 28px; border-radius: 999px; background: var(--accent); color: #fff;
+    font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500;
+    display: grid; place-items: center;
+  }
+  ol.steps li p { margin: 0 0 4px; }
+
+  /* --- tables --- */
+  .tablebox { overflow-x: auto; margin: 22px 0; border: 1px solid var(--line); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    background: var(--raised); font-weight: 600; font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft);
+  }
+  tr:last-child td { border-bottom: none; }
+  td.mono, th.mono { font-family: "IBM Plex Mono", monospace; font-size: 0.82rem; white-space: nowrap; }
+  .st { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; }
+  .st.done { color: var(--ok); }
+  .st.todo { color: var(--ink-soft); }
+  .num-col { text-align: right; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+
+  /* --- code tree --- */
+  pre.tree {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 20px; overflow-x: auto; font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8rem; line-height: 1.75; margin: 22px 0; color: var(--ink);
+  }
+  pre.tree .c { color: var(--ink-soft); }
+  pre.tree .d { color: var(--accent); }
+
+  .twocol { display: grid; gap: 22px; margin: 22px 0; }
+  @media (min-width: 620px) { .twocol { grid-template-columns: 1fr 1fr; } }
+  .panel {
+    border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; background: var(--surface);
+  }
+  .panel h3 { margin-top: 0; }
+  .panel p { font-size: 0.92rem; margin-bottom: 0; color: var(--ink-soft); }
+
+  .keyline { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; margin: 20px 0; color: var(--ink-soft); }
+
+  footer { padding: 40px 0 0; color: var(--ink-soft); font-size: 13px; font-family: "IBM Plex Mono", monospace; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .toc a { transition: color .12s, border-color .12s; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="mast">
+  <p class="kicker">El Gerente · documento de arquitectura</p>
+  <h1>Arquitectura de El Gerente</h1>
+  <p class="standfirst">Motor contable determinístico de partida doble para una sola empresa, con interfaz web y —a futuro— un chatbot de WhatsApp. Construido para que el dueño pueda auditar cada regla leyendo un solo archivo.</p>
+  <div class="statusline">
+    <span class="chip ok">Módulo 1 completo</span>
+    <span class="chip ok">90 pruebas en verde</span>
+    <span class="chip">FastAPI · SQLAlchemy 2 async · SQLite→PostgreSQL</span>
+    <span class="chip">Python 3.12</span>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contenido">
+    <ol>
+      <li><a href="#principios">Principios</a></li>
+      <li><a href="#capas">Las capas</a></li>
+      <li><a href="#flujo">Flujo de una petición</a></li>
+      <li><a href="#deps">Grafo de dependencias</a></li>
+      <li><a href="#carpetas">Mapa de carpetas</a></li>
+      <li><a href="#features">Inventario de features</a></li>
+      <li><a href="#datos">Base de datos</a></li>
+      <li><a href="#resiliencia">Resiliencia y logs</a></li>
+      <li><a href="#decisiones">Decisiones tomadas</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="principios">
+      <h2><span class="num">01</span>Principios</h2>
+      <p class="lede">Cuatro reglas gobiernan todo el código. Ninguna se rompe sin una decisión explícita del dueño.</p>
+      <div class="twocol">
+        <div class="panel">
+          <h3>Determinística primero</h3>
+          <p>La lógica contable es código normal con reglas explícitas, auditable línea por línea. La IA se reserva para leer documentos (Módulo 3, aún no construido) y nunca decide un asiento. <strong>El chatbot de WhatsApp es 100&nbsp;% determinístico.</strong></p>
+        </div>
+        <div class="panel">
+          <h3>Arquitectura por features</h3>
+          <p>Cada parte del programa es una carpeta autocontenida —<code>router</code>, <code>service</code>, <code>schemas</code>, <code>models</code>— con una carpeta de documentación espejo. Se audita y se mantiene una feature a la vez.</p>
+        </div>
+        <div class="panel">
+          <h3>La lógica vive en el servicio</h3>
+          <p>Toda regla de negocio está en los <code>service.py</code>. Los <code>router.py</code> solo traducen HTTP. Los servicios lanzan errores de dominio, nunca <code>HTTPException</code>: <code>app/main.py</code> los traduce.</p>
+        </div>
+        <div class="panel">
+          <h3>Un solo punto de escritura contable</h3>
+          <p>Nadie toca las tablas <code>asiento</code> / <code>linea_asiento</code> sin pasar por <code>crear_asiento()</code>, que valida la partida doble (débitos = créditos) <em>antes</em> de guardar.</p>
+        </div>
+      </div>
+      <p class="keyline">Async en todo desde el inicio (FastAPI, SQLAlchemy, httpx, pytest). El motor contable solo no lo necesita, pero el Módulo 2 y la IA sí, y tener un único estilo sale más barato de auditar.</p>
+    </section>
+
+    <section id="capas">
+      <h2><span class="num">02</span>Las capas</h2>
+      <p>Toda petición atraviesa las mismas capas, siempre en el mismo orden. Cada una tiene una responsabilidad y una prohibición.</p>
+      <div class="layers">
+        <div class="layer">
+          <div class="lname">Transporte</div>
+          <div class="ldesc">Router de FastAPI o webhook de WhatsApp. Valida el formato con Pydantic, llama al servicio, traduce el error de dominio a HTTP.</div>
+          <div class="lpath">app/**/router.py · app/main.py &nbsp;—&nbsp; <span class="lno">no decide nada de negocio</span></div>
+        </div>
+        <div class="flowdown">↓</div>
+        <div class="layer">
+          <div class="lname">Servicio de feature</div>
+          <div class="ldesc">Toda la regla de negocio. "Una factura recibida genera este asiento." Funciones <code>async</code>. Lanza <code>NoEncontrado</code>, <code>Conflicto</code>, <code>DatosInvalidos</code>.</div>
+          <div class="lpath">app/features/&lt;feature&gt;/service.py &nbsp;—&nbsp; <span class="lno">no arma respuestas HTTP</span></div>
+        </div>
+        <div class="flowdown">↓</div>
+        <div class="layer">
+          <div class="lname">Núcleo contable</div>
+          <div class="ldesc"><code>crear_asiento()</code> valida el cuadre de partida doble y el documento de soporte. <code>calcular_balance()</code> es una sola consulta SQL de agregación con filtros de libro, periodo y actor.</div>
+          <div class="lpath">app/contabilidad/ &nbsp;—&nbsp; <span class="lno">único que escribe en las tablas contables</span></div>
+        </div>
+        <div class="flowdown">↓</div>
+        <div class="layer">
+          <div class="lname">Modelos (SQLAlchemy)</div>
+          <div class="ldesc">Las tablas como clases Python. Relaciones cargadas de forma explícita (<code>lazy="selectin"</code>), nunca perezosa —lo prohíbe async.</div>
+          <div class="lpath">app/**/models.py · app/models.py (agregador)</div>
+        </div>
+      </div>
+      <p>Cuando el Módulo 2 (WhatsApp) necesite registrar una factura, llamará a <code>facturas.service.registrar_factura(...)</code> —la <strong>misma función</strong> que usa la API—, no reimplementará la lógica.</p>
+    </section>
+
+    <section id="flujo">
+      <h2><span class="num">03</span>Flujo de una petición</h2>
+      <p class="lede">Ejemplo: <code>POST /facturas</code> con una factura recibida de $500.000 + $95.000 de IVA.</p>
+      <ol class="steps">
+        <li><p><strong>FastAPI</strong> recibe el JSON y lo valida contra el esquema <code>FacturaCreate</code>. Falta un campo o tipo equivocado → <code>422</code> automático.</p></li>
+        <li><p>El router <code>facturas/router.py</code> pide una sesión de base de datos (<code>Depends(get_db)</code>) y llama a <code>facturas.service.registrar_factura(session, ...)</code>.</p></li>
+        <li><p>El <strong>servicio</strong> verifica que el tercero exista (si no → <code>NoEncontrado</code> → <code>404</code>), calcula <code>total = subtotal + iva</code> en el servidor, y arma las tres líneas del asiento según la tabla de reglas de la feature.</p></li>
+        <li><p>Llama a <code>contabilidad.asientos.crear_asiento(...)</code> con el <code>tercero_id</code>. Este valida que <span class="mono" style="color:var(--debito)">Σ débitos</span> = <span class="mono" style="color:var(--credito)">Σ créditos</span>. Si no cuadra → <code>AsientoDesbalanceado</code> y no se guarda nada.</p></li>
+        <li><p>El servicio guarda la factura enlazada a ese asiento y hace <code>commit</code>. Registra en el log: <code class="mono">Factura F-001 registrada — #3 total=595000.00</code>.</p></li>
+        <li><p>El router devuelve la factura creada como JSON (<code>FacturaOut</code>). Si algo falló de forma inesperada, <code>app/main.py</code> responde <code>500</code> con un mensaje genérico y el traceback queda en el log —el servidor sigue vivo.</p></li>
+      </ol>
+    </section>
+
+    <section id="deps">
+      <h2><span class="num">04</span>Grafo de dependencias</h2>
+      <p>Quién importa a quién. Cada carpeta de <code>features/</code> es independiente de las demás y solo depende del núcleo y de <code>core/</code>.</p>
+      <div class="diagram">
+        <pre class="mermaid">
+%%{init: {'theme':'neutral', 'flowchart': {'curve':'basis'}}}%%
+graph TD
+  subgraph core["app/core — transversal"]
+    config["config.py"]
+    db["db.py · get_db"]
+    errors["errors.py"]
+    logging["logging.py"]
+  end
+  subgraph nucleo["app/contabilidad — núcleo"]
+    models["models.py"]
+    asientos["asientos.py<br/>crear_asiento()"]
+    balance["balance.py + detalle_cuenta.py"]
+    plan["plan_cuentas.py"]
+    crouter["router.py<br/>/cuentas /asientos /balance"]
+  end
+  subgraph feats["app/features"]
+    terceros["terceros/"]
+    facturas["facturas/"]
+    pagos["pagos/"]
+    contratos["contratos/"]
+    movimientos["movimientos/"]
+    documentos["documentos/ (enlace)"]
+  end
+  main["app/main.py<br/>create_app()"]
+  web["app/web/ — interfaz HTML"]
+
+  db --> config & logging
+  models --> db
+  asientos --> models & errors & logging
+  balance --> models
+  crouter --> balance & models & db
+  terceros --> db & errors
+  facturas --> asientos & terceros & documentos
+  pagos --> asientos & facturas
+  contratos --> terceros & documentos
+  movimientos --> asientos & terceros
+  main --> crouter & terceros & facturas & pagos & contratos & movimientos
+  web -.->|fetch HTTP| main
+        </pre>
+        <p class="caption">Las flechas punteadas son llamadas HTTP; el resto son imports de Python. El Módulo 2 (WhatsApp) colgará de <code>app/features/whatsapp/</code> y llamará a los servicios del Módulo 1 en el mismo proceso.</p>
+      </div>
+    </section>
+
+    <section id="carpetas">
+      <h2><span class="num">05</span>Mapa de carpetas</h2>
+      <pre class="tree">backend/
+  pyproject.toml            <span class="c">dependencias + config de pytest/ruff</span>
+  Dockerfile · docker-entrypoint.sh   <span class="c">imagen 12-factor, usuario sin privilegios</span>
+  alembic/versions/         <span class="c">0001 esquema · 0002 enlaces · 0003 tercero del asiento</span>
+  <span class="d">app/</span>
+    core/                   <span class="c">config (.env), engine async, logging, errores de dominio</span>
+    contabilidad/           <span class="c">NÚCLEO — cuenta/asiento/linea_asiento, crear_asiento,</span>
+                            <span class="c">balance (filtro libro+periodo+actor), detalle_cuenta, plan de cuentas</span>
+    documentos/             <span class="c">enlace.py — valida la URL del RUT/PDF; punto de cambio para S3</span>
+    features/
+      terceros/  facturas/  pagos/  contratos/  movimientos/
+                            <span class="c">cada una: models · schemas · service · router (+ exceptions)</span>
+    web/                    <span class="c">index.html + app.js + styles.css — JavaScript plano, sin build</span>
+    main.py                 <span class="c">create_app(): lifespan, logging por petición, errores, /salud, routers</span>
+    models.py               <span class="c">agregador — importa todos los modelos para Alembic y los tests</span>
+    seed.py                 <span class="c">siembra el plan de cuentas (NO crea tablas)</span>
+  scripts/reset_db.py · seed_demo.py · generar_mapa.py
+  tests/  unit/ (44)  integration/ (46)
+
+docker-compose.yml          <span class="c">app + PostgreSQL para probar en local</span>
+CLAUDE.md                   <span class="c">punto de entrada para sesiones de IA</span>
+docs/  ESTADO.md · MAPA.md · TAREAS.md · PARA-NUEVO-CHAT.md
+       arquitectura/ · aprendizaje/ · features/&lt;feature&gt;/spec.md
+       _generado/indice-codigo.md   <span class="c">índice de todos los símbolos (generado)</span></pre>
+    </section>
+
+    <section id="features">
+      <h2><span class="num">06</span>Inventario de features</h2>
+      <p>Cada feature tiene un <code>spec.md</code> (reglas numeradas + casos de prueba) y una entrada en el índice.</p>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th>Feature</th><th>Rol</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">contabilidad-nucleo</td><td>Plan de cuentas, asientos de partida doble, regla de cuadre, libros oficial/interno</td><td class="st done">✔ verificado</td></tr>
+            <tr><td class="mono">balance</td><td>Saldo por cuenta con filtro libro / periodo / actor; extracto por cuenta con saldo acumulado</td><td class="st done">✔ verificado</td></tr>
+            <tr><td class="mono">terceros</td><td>Actor externo de cada transacción — cliente, proveedor, banco, empleado, socio, otro</td><td class="st done">✔ verificado</td></tr>
+            <tr><td class="mono">facturas</td><td>Registrar factura emitida/recibida → asiento automático</td><td class="st done">✔ verificado</td></tr>
+            <tr><td class="mono">pagos</td><td>Pagar/cobrar factura → asiento automático + cambio de estado</td><td class="st done">✔ verificado</td></tr>
+            <tr><td class="mono">contratos</td><td>Registro informativo (sin contabilidad)</td><td class="st done">✔ verificado</td></tr>
+            <tr><td class="mono">movimientos</td><td>Asiento manual: oficial (con soporte) / interno (para-contabilidad)</td><td class="st done">✔ verificado</td></tr>
+            <tr><td class="mono">documentos</td><td>Enlace a PDF/RUT por tercero, factura y contrato (una URL hoy; S3 después)</td><td class="st done">✔ verificado</td></tr>
+            <tr><td class="mono">web-ui</td><td>Interfaz HTML: Registrar + Analizar (árbol tipo→cuenta→extracto), servida en <code>/</code></td><td class="st done">✔ verificado</td></tr>
+            <tr><td class="mono">whatsapp-*</td><td>Proveedor, webhook, conversaciones, asistente y 5 flujos de registro — chatbot determinístico</td><td class="st todo">◻ Módulo 2, pendiente</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="datos">
+      <h2><span class="num">07</span>Base de datos</h2>
+      <p>SQLite (un archivo) para desarrollo, PostgreSQL para producción. Se cambia <strong>una línea</strong> —<code>DATABASE_URL</code> en el <code>.env</code>—; ningún código se toca, todo pasa por el ORM async. El esquema se crea con migraciones <strong>Alembic</strong>, no con <code>create_all</code>: un test verifica que los modelos y las migraciones no se separen.</p>
+      <h3>Plan de cuentas sembrado</h3>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th class="mono">Código</th><th>Cuenta</th><th>Tipo</th><th>Naturaleza</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">1105</td><td>Caja</td><td>activo</td><td>deudora</td></tr>
+            <tr><td class="mono">1110</td><td>Bancos</td><td>activo</td><td>deudora</td></tr>
+            <tr><td class="mono">1305</td><td>Cuentas por cobrar</td><td>activo</td><td>deudora</td></tr>
+            <tr><td class="mono">2105</td><td>Obligaciones financieras</td><td>pasivo</td><td>acreedora</td></tr>
+            <tr><td class="mono">2205</td><td>Cuentas por pagar</td><td>pasivo</td><td>acreedora</td></tr>
+            <tr><td class="mono">2408</td><td>Impuestos por pagar - IVA</td><td>pasivo</td><td>acreedora</td></tr>
+            <tr><td class="mono">2905</td><td>Cuentas con el dueño</td><td>pasivo</td><td>acreedora</td></tr>
+            <tr><td class="mono">3115</td><td>Capital</td><td>patrimonio</td><td>acreedora</td></tr>
+            <tr><td class="mono">4135</td><td>Ingresos por ventas</td><td>ingreso</td><td>acreedora</td></tr>
+            <tr><td class="mono">5195</td><td>Gastos diversos</td><td>gasto</td><td>deudora</td></tr>
+            <tr><td class="mono">5905</td><td>Gastos internos sin soporte</td><td>gasto</td><td>deudora</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption">Códigos inspirados en el PUC colombiano para no chocar con la DIAN más adelante. La naturaleza (deudora / acreedora) determina el signo del saldo: deudora = débitos − créditos; acreedora al revés.</p>
+      <h3>Los dos libros</h3>
+      <p>Cada asiento pertenece al libro <strong>oficial</strong> (contabilidad real, exige documento de soporte, cuenta para la DIAN) o <strong>interno</strong> (para-contabilidad: retiros informales, préstamos sin papeles). El balance por defecto solo suma el oficial; <code>?libro=todos</code> muestra la caja "real".</p>
+    </section>
+
+    <section id="resiliencia">
+      <h2><span class="num">08</span>Resiliencia y logs</h2>
+      <div class="twocol">
+        <div class="panel">
+          <h3>Errores</h3>
+          <p>De dominio (404/409/422) → mensaje claro, log <code>INFO</code>. Inesperados → <code>500</code> genérico sin filtrar internos, traceback en el log, el servidor sigue vivo. Datos inválidos → <code>422</code> con detalle.</p>
+        </div>
+        <div class="panel">
+          <h3>Transacciones</h3>
+          <p>Una por petición. Si el servicio falla, <code>get_db</code> hace <code>rollback</code> antes de cerrar: nunca queda un asiento suelto.</p>
+        </div>
+        <div class="panel">
+          <h3>Base de datos caída</h3>
+          <p>El pool de PostgreSQL usa <code>pool_pre_ping</code>. Al arrancar, si la BD no responde, la app arranca igual, lo deja en el log y <code>/salud</code> responde <code>"degradado"</code>.</p>
+        </div>
+        <div class="panel">
+          <h3>Logs</h3>
+          <p>Todo a stdout, formato único, loggers <code>elgerente.&lt;área&gt;</code>. Una línea por petición y por hecho de negocio. La contraseña de la BD nunca aparece.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="decisiones">
+      <h2><span class="num">09</span>Decisiones tomadas</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th>Tema</th><th>Decisión</th></tr></thead>
+          <tbody>
+            <tr><td>Alcance de v1</td><td>Módulo 1 (motor contable) + Módulo 2 (WhatsApp, registro guiado)</td></tr>
+            <tr><td>Partida simple vs. doble</td><td>Partida doble real desde el inicio — el dueño ya la maneja, evita una migración costosa</td></tr>
+            <tr><td>Asincronismo</td><td>Async en todo, desde el primer día</td></tr>
+            <tr><td>Chatbot de WhatsApp</td><td>100&nbsp;% determinístico — sin IA en flujos, asistente ni detección de intención</td></tr>
+            <tr><td>Proveedor de WhatsApp</td><td>Sin decidir — se construye contra una interfaz <code>ProveedorWhatsApp</code> con adaptador <code>Fake</code></td></tr>
+            <tr><td>Documentos (RUT, PDF)</td><td>Una URL de texto por ahora; almacenamiento real (S3) después, con un adaptador ya aislado</td></tr>
+            <tr><td>Actor de cada transacción</td><td>Todo asiento registra su <code>tercero_id</code>; un banco es un tipo de tercero</td></tr>
+            <tr><td>IVA</td><td>Neteado en una sola cuenta (2408); se parte en dos si hace falta declararlo formalmente</td></tr>
+            <tr><td>Documentación</td><td><code>docs/</code> es la documentación viva; <code>analysis/</code> queda como historial de brainstorming</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      El Gerente · rama feat/v1-modulo-1-arquitectura-features · para el detalle vivo: docs/ESTADO.md · docs/MAPA.md · docs/TAREAS.md
+    </footer>
+  </main>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,securityLevel:"loose"});</script>
+</body>
+</html>

@@ -112,11 +112,13 @@ CLAUDE.md                   punto de entrada para sesiones de IA (apunta a docs/
 
 docs/
   README.md                índice de la documentación
-  ESTADO.md                este archivo
+  ESTADO.md                este archivo — qué está hecho y qué falta
   MAPA.md                  navegación del código para mantenimiento (tarea -> archivo + símbolo)
+  TAREAS.md                backlog priorizado (cada tarea = un chat)
+  PARA-NUEVO-CHAT.md       cómo arrancar un chat nuevo sin recargar contexto / trabajar en paralelo
   _generado/
     indice-codigo.md       índice de todos los símbolos (generado por scripts/generar_mapa.py)
-  arquitectura/            vision-tecnica, base-de-datos, testing, resiliencia-y-logs, despliegue
+  arquitectura/            vista-general.html + vision-tecnica, base-de-datos, testing, resiliencia-y-logs, despliegue
   aprendizaje/             partida-doble, que-es-una-api, async-await, deterministico-vs-ia
   features/
     README.md              índice de las 17 features con su estado
@@ -200,18 +202,16 @@ Detalle en [`arquitectura/despliegue.md`](arquitectura/despliegue.md).
 
 ## Lo próximo
 
-1. **Probar el Módulo 1 con clientes de verdad.** Montarlo en local (interfaz en `/`,
-   ya con datos demo), registrar datos reales unos días, y anotar lo que falte o incomode.
-2. **Decidir la entrada simplificada de movimientos**: hoy la pantalla pide cuenta + débito
-   + crédito por línea. Para el uso diario (y para WhatsApp) hace falta un "entró/salió
-   plata" que elija las cuentas solo. Definir los tipos de movimiento y sus cuentas.
-3. Con eso, cerrar el resto de huecos que aparezcan (validaciones, campos, textos).
-4. Recién entonces, **Etapa 3**: documentar el Módulo 2 (WhatsApp) y construirlo.
-   Recordatorio: el chatbot es **100 % determinístico**.
+El backlog completo y priorizado, con cada tarea lista para ser un chat/agente, está en
+**[`TAREAS.md`](TAREAS.md)**. Resumen:
 
-### Pendiente conocido antes de exponerlo fuera de una red de confianza
+1. **Probar el Módulo 1 con clientes de verdad** (interfaz en `/`, ya con datos demo).
+   Anotar lo que falte o incomode.
+2. **Antes de exponerlo**: autenticación/login (`TAREAS.md` A1) y verificar la imagen
+   Docker con un `docker compose up --build` real (A2).
+3. **Entrada simplificada de movimientos** — "entró/salió plata" sin elegir cuentas
+   (`TAREAS.md` B1, necesita una decisión del dueño sobre los tipos de movimiento).
+4. **Módulo 2 (WhatsApp)** — Etapas 3–5 del plan (`TAREAS.md` C). Chatbot **100 %
+   determinístico**. Se puede partir en varios chats (ver `PARA-NUEVO-CHAT.md`).
 
-- **Autenticación / login**: hoy no hay (una sola persona). Ver
-  [`arquitectura/despliegue.md`](arquitectura/despliegue.md).
-- La imagen Docker está escrita y revisada pero **no se pudo construir en este entorno**
-  (sin permisos de Docker); conviene un `docker compose up --build` de verificación.
+Para continuar en otro chat sin recargar contexto: **[`PARA-NUEVO-CHAT.md`](PARA-NUEVO-CHAT.md)**.
